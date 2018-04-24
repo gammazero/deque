@@ -1,13 +1,15 @@
 /*
-Package deque provides a fast, ring-buffer deque (double-ended queue) that
-automatically re-sizes by powers of two.  This allows bitwise arithmetic for
-all calculations.  The ring-buffer implementation significantly improves memory
-and time performance with fewer GC pauses, compared to implementations based on
-slices and linked lists.
+Package deque provides a fast ring-buffer deque (double-ended queue)
+implementation.  The ring-buffer automatically re-sizes by powers of two,
+growing when additional capacity is needed and shrinking when only a quarter of
+the capacity is used, and uses bitwise arithmetic for all calculations.
+
+The ring-buffer implementation significantly improves memory and time
+performance with fewer GC pauses, compared to implementations based on slices
+and linked lists.
 
 For maximum speed, this deque implementation leaves concurrency safety up to
-the application to provide, however is best for the application if needed at
-all.
+the application to provide, however the application chooses, if needed at all.
 
 Queue (FIFO) operations are supported using PushBack() and PopFront().  Stack
 (LIFO) operations are supported using PushBack() and PopBack().
@@ -139,6 +141,8 @@ func (q *Deque) PeekAt(i int) interface{} {
 }
 
 // Clear removes all elements from the queue, but retains the current capacity.
+// The queue will not be resized smaller as long as items are only added.
+// Only when items are removed is the queue subject to getting resized smaller.
 func (q *Deque) Clear() {
 	// bitwise modulus
 	mbits := len(q.buf) - 1
