@@ -5,15 +5,15 @@
 [![codecov](https://codecov.io/gh/gammazero/deque/branch/master/graph/badge.svg)](https://codecov.io/gh/gammazero/deque)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/gammazero/deque/blob/master/LICENSE)
 
-A fast ring-buffer deque (double-ended queue) implementation.
+Extremely fast ring-buffer deque ([double-ended queue](https://en.wikipedia.org/wiki/Double-ended_queue)) implementation.
 
 [![GoDoc](https://godoc.org/github.com/gammazero/deque?status.png)](https://godoc.org/github.com/gammazero/deque)
 
-This deque implementation automatically re-sizes by powers of two, growing when additional capacity is needed and shrinking when only a quarter of the capacity is used.  This allows bitwise arithmetic for all calculations.
+This deque implementation is optimized for CPU and GC performance.  The circular buffer automatically re-sizes by powers of two, growing when additional capacity is needed and shrinking when only a quarter of the capacity is used, and uses bitwise arithmetic for all calculations.
 
 The ring-buffer implementation significantly improves memory and time performance with fewer GC pauses, compared to implementations based on slices and linked lists.
 
-For maximum speed, this deque implementation leaves concurrency safety up to the application to provide, however is best for the application if needed at all.
+For maximum speed, this deque implementation leaves concurrency safety up to the application to provide, however the application chooses, if needed at all.
 
 ## Installation
 
@@ -54,3 +54,9 @@ func main() {
     fmt.Println()
 }
 ```
+
+## Uses
+
+Deque can be used as both a:
+- [Queue](https://en.wikipedia.org/wiki/Queue_(abstract_data_type)) using `PushBack` and `PopFront`
+- [Stack](https://en.wikipedia.org/wiki/Stack_(abstract_data_type)) using `PushBack` and `PopBack`
