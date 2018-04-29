@@ -548,104 +548,50 @@ func assertPanics(t *testing.T, name string, f func()) {
 	f()
 }
 
-// Size (number of items) of Deque to use for benchmarks.
-const size = minCapacity + (minCapacity / 2)
-
 func BenchmarkPushFront(b *testing.B) {
 	var q Deque
 	for i := 0; i < b.N; i++ {
-		for n := 0; n < size; n++ {
-			q.PushFront(n)
-		}
+		q.PushFront(i)
 	}
 }
 
 func BenchmarkPushBack(b *testing.B) {
 	var q Deque
 	for i := 0; i < b.N; i++ {
-		for n := 0; n < size; n++ {
-			q.PushBack(n)
-		}
+		q.PushBack(i)
 	}
 }
 
 func BenchmarkSerial(b *testing.B) {
 	var q Deque
 	for i := 0; i < b.N; i++ {
-		for n := 0; n < size; n++ {
-			q.PushBack(i)
-		}
-		for n := 0; n < size; n++ {
-			x := q.Front()
-			if q.PopFront() != x {
-				panic("bad PopFront()")
-			}
-		}
+		q.PushBack(i)
+	}
+	for i := 0; i < b.N; i++ {
+		q.PopFront()
 	}
 }
 
 func BenchmarkSerialReverse(b *testing.B) {
 	var q Deque
 	for i := 0; i < b.N; i++ {
-		for n := 0; n < size; n++ {
-			q.PushFront(i)
-		}
-		for n := 0; n < size; n++ {
-			x := q.Back()
-			if q.PopBack() != x {
-				panic("bad PopBack()")
-			}
-		}
+		q.PushFront(i)
+	}
+	for i := 0; i < b.N; i++ {
+		q.PopBack()
 	}
 }
 
 func BenchmarkRotate(b *testing.B) {
 	var q Deque
-	for i := 0; i < size; i++ {
+	for i := 0; i < b.N; i++ {
 		q.PushBack(i)
 	}
 	b.ResetTimer()
+	// N complete rotations on length N.
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < size; j++ {
-			v := q.PopFront()
-			q.PushBack(v)
-		}
-	}
-}
-
-func BenchmarkRotateReverse(b *testing.B) {
-	var q Deque
-	for i := 0; i < size; i++ {
-		q.PushBack(i)
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < size; j++ {
-			v := q.PopBack()
-			q.PushFront(v)
-		}
-	}
-}
-
-func BenchmarkDequeGet(b *testing.B) {
-	var q Deque
-	for i := 0; i < size; i++ {
-		q.PushBack(i)
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < size; j++ {
-			q.Get(j)
-		}
-	}
-}
-
-func BenchmarkDequePushPop(b *testing.B) {
-	var q Deque
-	for i := 0; i < b.N; i++ {
-		for n := 0; n < size; n++ {
-			q.PushBack(nil)
-			q.PopFront()
+		for j := 0; j < b.N; j++ {
+			q.PushBack(q.PopFront())
 		}
 	}
 }
