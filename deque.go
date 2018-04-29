@@ -123,21 +123,107 @@ func (q *Deque) Back() interface{} {
 	return q.buf[(q.tail-1)&(len(q.buf)-1)]
 }
 
-// PeekAt returns the element at index i in the queue.  This method accepts
-// both positive and negative index values.  PeekAt(0) refers to the first
-// (earliest added) element and is the same as Front().  PeekAt(-1) refers to
-// the last (latest added) element and is the same as Back().  If the index
-// is invalid, the call panics.
-func (q *Deque) PeekAt(i int) interface{} {
-	// If indexing backwards, convert to positive index.
-	if i < 0 {
-		i += q.count
-	}
+// Get returns the element at index i in the queue.  This method accepts only
+// non-negative index values.  Get(0) refers to the first element and is the
+// same as Front().  Get(Len()-1) refers to the last element and is the same
+// as Back().  If the index is invalid, the call panics.
+func (q *Deque) Get(i int) interface{} {
 	if i < 0 || i >= q.count {
-		panic("deque: PeekAt() called with index out of range")
+		panic("deque: Get() called with index out of range")
 	}
 	// bitwise modulus
 	return q.buf[(q.head+i)&(len(q.buf)-1)]
+}
+
+// Insert is used to insert an element into the middle of the queue.
+// Insert(0,e) is the same as PushFront(e) and Insert(Len(),e) is the same as
+// PushBack(e).  Accepts only non-negative index values, and panics if index is
+// out of range.
+func (q *Deque) Insert(i int, elem interface{}) {
+	if i < 0 || i > q.count {
+		panic("deque: Insert() called with index out of range")
+	}
+	if i == 0 {
+		q.PushFront(elem)
+		return
+	}
+	if i == q.count {
+		q.PushBack(elem)
+		return
+	}
+	if i <= q.count/2 {
+		// If inserting closer to front, rotate front to back i places, put
+		// element at front, then rotate back to front i places.
+		for j := 0; j < i; j++ {
+			q.PushBack(q.PopFront())
+		}
+		q.PushFront(elem)
+		for j := 0; j < i; j++ {
+			q.PushFront(q.PopBack())
+		}
+	} else {
+		// If inserting closer to back, rotate back to front Len() - i places,
+		// put element at back, then rotate front to back same amount.
+		rots := q.count - i
+		for j := 0; j < rots; j++ {
+			q.PushFront(q.PopBack())
+		}
+		q.PushBack(elem)
+		for j := 0; j < rots; j++ {
+			q.PushBack(q.PopFront())
+		}
+	}
+}
+
+// Remove removes and returns an element from the middle of the queue.
+// Remove(0) is the same as PopFront() and Remove(Len()-1) is the same as
+// PopBack().  Accepts only non-negative index values, and panics if index is
+// out of range.
+func (q *Deque) Remove(i int) interface{} {
+	if i < 0 || i >= q.count {
+		panic("deque: Remove() called with index out of range")
+	}
+	if i == 0 {
+		return q.PopFront()
+	}
+	if i == q.count-1 {
+		return q.PopBack()
+	}
+	var elem interface{}
+	if i <= q.count/2 {
+		// If removing closer to front, rotate front to back i places, remove
+		// element at front, then rotate back to front i places.
+		for j := 0; j < i; j++ {
+			q.PushBack(q.PopFront())
+		}
+		elem = q.PopFront()
+		for j := 0; j < i; j++ {
+			q.PushFront(q.PopBack())
+		}
+	} else {
+		// If removing closer to back, rotate back to front Len() - 1 - i
+		// places, remove element at back, then rotate front to back same
+		// amount.
+		rots := (q.count - 1) - i
+		for j := 0; j < rots; j++ {
+			q.PushFront(q.PopBack())
+		}
+		elem = q.PopBack()
+		for j := 0; j < rots; j++ {
+			q.PushBack(q.PopFront())
+		}
+	}
+	return elem
+}
+
+// Replace replaces the element at position i with the given element.  Accepts
+// only non-negative index values, and panics if index is out of range
+func (q *Deque) Replace(i int, elem interface{}) {
+	if i < 0 || i >= q.count {
+		panic("deque: Remove() called with index out of range")
+	}
+	// bitwise modulus
+	q.buf[(q.head+i)&(len(q.buf)-1)] = elem
 }
 
 // Clear removes all elements from the queue, but retains the current capacity.
