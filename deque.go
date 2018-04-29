@@ -135,10 +135,10 @@ func (q *Deque) Get(i int) interface{} {
 	return q.buf[(q.head+i)&(len(q.buf)-1)]
 }
 
-// Insert is used to insert an element into the queue at a location other than
-// one of the ends.  Insert(0,e) is the same as PushFront(e) and
-// Insert(Len(),e) is the same as PushBack(e).  Accepts only non-negative index
-// values, and panics if index is out of range.
+// Insert is used to insert an element into the middle of the queue.
+// Insert(0,e) is the same as PushFront(e) and Insert(Len(),e) is the same as
+// PushBack(e).  Accepts only non-negative index values, and panics if index is
+// out of range.
 func (q *Deque) Insert(i int, elem interface{}) {
 	if i < 0 || i > q.count {
 		panic("deque: Insert() called with index out of range")
@@ -162,7 +162,7 @@ func (q *Deque) Insert(i int, elem interface{}) {
 			q.PushFront(q.PopBack())
 		}
 	} else {
-		// If inserting closer to back, rotate back to font Len() - i places,
+		// If inserting closer to back, rotate back to front Len() - i places,
 		// put element at back, then rotate front to back same amount.
 		rots := q.count - i
 		for j := 0; j < rots; j++ {
@@ -175,10 +175,10 @@ func (q *Deque) Insert(i int, elem interface{}) {
 	}
 }
 
-// Remove removes and returns an element from the queue, from a location other
-// than one of the ends.  Remove(0) is the same as PopFront() and
-// Remove(Len()-1) is the same as PopBack().  Accepts only non-negative index
-// values, and panics if index is out of range.
+// Remove removes and returns an element from the middle of the queue.
+// Remove(0) is the same as PopFront() and Remove(Len()-1) is the same as
+// PopBack().  Accepts only non-negative index values, and panics if index is
+// out of range.
 func (q *Deque) Remove(i int) interface{} {
 	if i < 0 || i >= q.count {
 		panic("deque: Remove() called with index out of range")
@@ -201,7 +201,7 @@ func (q *Deque) Remove(i int) interface{} {
 			q.PushFront(q.PopBack())
 		}
 	} else {
-		// If removing closer to back, rotate back to font Len() - 1 - i
+		// If removing closer to back, rotate back to front Len() - 1 - i
 		// places, remove element at back, then rotate front to back same
 		// amount.
 		rots := (q.count - 1) - i
