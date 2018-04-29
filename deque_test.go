@@ -346,6 +346,16 @@ func TestInsert(t *testing.T) {
 	if q.Peek(5) != "x" {
 		t.Error("expected x at position 5")
 	}
+
+	q.Insert(0, "b")
+	if q.Front() != "b" {
+		t.Error("expected b inserted at front")
+	}
+
+	q.Insert(q.Len(), "e")
+	if q.Back() != "e" {
+		t.Error("expected e inserted at back")
+	}
 }
 
 func TestRemove(t *testing.T) {
@@ -374,6 +384,14 @@ func TestRemove(t *testing.T) {
 
 	if q.Peek(4) != "G" {
 		t.Error("expected G at position 4")
+	}
+
+	if q.Remove(0) != "A" {
+		t.Error("expected to remove A from front")
+	}
+
+	if q.Remove(q.Len()-1) != "G" {
+		t.Error("expected to remove G from back")
 	}
 }
 
@@ -441,6 +459,42 @@ func TestPopBackOutOfRangePanics(t *testing.T) {
 
 	assertPanics(t, "should panic when removing emptied queue", func() {
 		q.PopBack()
+	})
+}
+
+func TestInsertOutOfRangePanics(t *testing.T) {
+	var q Deque
+
+	assertPanics(t, "should panic when inserting out of range", func() {
+		q.Insert(1, "X")
+	})
+
+	q.PushBack("A")
+
+	assertPanics(t, "should panic when inserting at negative index", func() {
+		q.Insert(-1, "Y")
+	})
+
+	assertPanics(t, "should panic when inserting out of range", func() {
+		q.Insert(2, "B")
+	})
+}
+
+func TestRemoveOutOfRangePanics(t *testing.T) {
+	var q Deque
+
+	assertPanics(t, "should panic when removing from empty queue", func() {
+		q.Remove(0)
+	})
+
+	q.PushBack("A")
+
+	assertPanics(t, "should panic when removing at negative index", func() {
+		q.Remove(-1)
+	})
+
+	assertPanics(t, "should panic when removing out of range", func() {
+		q.Remove(1)
 	})
 }
 

@@ -49,7 +49,7 @@ func main() {
 
     // Print: hello bar world
     for i := 0; i < q.Len(); i++ {
-        fmt.Print(q.PeekAt(i), " ")
+        fmt.Print(q.Peek(i), " ")
     }
     fmt.Println()
 }
