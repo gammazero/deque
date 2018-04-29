@@ -395,6 +395,28 @@ func TestRemove(t *testing.T) {
 	}
 }
 
+func TestReplace(t *testing.T) {
+	var q Deque
+	q.PushBack("a")
+	q.PushBack("b")
+	q.PushBack("c")
+
+	q.Replace(0, "A")
+	if q.Front() != "A" {
+		t.Error("expected A at front")
+	}
+
+	q.Replace(q.Len()-1, "C")
+	if q.Back() != "C" {
+		t.Error("expected C at back")
+	}
+
+	q.Replace(1, "-")
+	if q.Peek(1) != "-" {
+		t.Error("expected - at position 1")
+	}
+}
+
 func TestPeekOutOfRangePanics(t *testing.T) {
 	var q Deque
 
@@ -495,6 +517,24 @@ func TestRemoveOutOfRangePanics(t *testing.T) {
 
 	assertPanics(t, "should panic when removing out of range", func() {
 		q.Remove(1)
+	})
+}
+
+func TestReplaceOutOfRangePanics(t *testing.T) {
+	var q Deque
+
+	assertPanics(t, "should panic when replacing in empty queue", func() {
+		q.Replace(0, "x")
+	})
+
+	q.PushBack("A")
+
+	assertPanics(t, "should panic when replacing at negative index", func() {
+		q.Replace(-1, "Z")
+	})
+
+	assertPanics(t, "should panic when replacing out of range", func() {
+		q.Replace(1, "Y")
 	})
 }
 
