@@ -216,6 +216,16 @@ func (q *Deque) Remove(i int) interface{} {
 	return elem
 }
 
+// Replace replaces the element at position i with the given element.  Accepts
+// only non-negative index values, and panics if index is out of range
+func (q *Deque) Replace(i int, elem interface{}) {
+	if i < 0 || i >= q.count {
+		panic("deque: Remove() called with index out of range")
+	}
+	// bitwise modulus
+	q.buf[(q.head+i)&(len(q.buf)-1)] = elem
+}
+
 // Clear removes all elements from the queue, but retains the current capacity.
 // The queue will not be resized smaller as long as items are only added.
 // Only when items are removed is the queue subject to getting resized smaller.
