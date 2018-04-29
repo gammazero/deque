@@ -123,13 +123,13 @@ func (q *Deque) Back() interface{} {
 	return q.buf[(q.tail-1)&(len(q.buf)-1)]
 }
 
-// Peek returns the element at index i in the queue.  This method accepts only
-// non-negative index values.  Peek(0) refers to the first element and is the
-// same as Front().  q.Peek(Len()-1) refers to the last element and is the same
+// Get returns the element at index i in the queue.  This method accepts only
+// non-negative index values.  Get(0) refers to the first element and is the
+// same as Front().  Get(Len()-1) refers to the last element and is the same
 // as Back().  If the index is invalid, the call panics.
-func (q *Deque) Peek(i int) interface{} {
+func (q *Deque) Get(i int) interface{} {
 	if i < 0 || i >= q.count {
-		panic("deque: Peek() called with index out of range")
+		panic("deque: Get() called with index out of range")
 	}
 	// bitwise modulus
 	return q.buf[(q.head+i)&(len(q.buf)-1)]
