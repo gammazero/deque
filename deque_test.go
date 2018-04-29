@@ -595,3 +595,25 @@ func BenchmarkRotate(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkInsert(b *testing.B) {
+	var q Deque
+	for i := 0; i < b.N; i++ {
+		q.PushBack(i)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		q.Insert(q.Len()/2, -i)
+	}
+}
+
+func BenchmarkRemove(b *testing.B) {
+	var q Deque
+	for i := 0; i < b.N; i++ {
+		q.PushBack(i)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		q.Remove(q.Len() / 2)
+	}
+}

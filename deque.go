@@ -152,25 +152,26 @@ func (q *Deque) Insert(i int, elem interface{}) {
 		return
 	}
 	if i <= q.count/2 {
-		// If inserting closer to front, rotate front to back i places, put
-		// element at front, then rotate back to front i places.
-		for j := 0; j < i; j++ {
-			q.PushBack(q.PopFront())
-		}
+		// If inserting closer to front, put element at front, then swap
+		// elements until new element at specified position.
 		q.PushFront(elem)
+		mod := (len(q.buf) - 1)
+		var x, y int
 		for j := 0; j < i; j++ {
-			q.PushFront(q.PopBack())
+			x = (q.head + j) & mod
+			y = (q.head + j + 1) & mod
+			q.buf[x], q.buf[y] = q.buf[y], q.buf[x]
 		}
 	} else {
-		// If inserting closer to back, rotate back to front Len() - i places,
-		// put element at back, then rotate front to back same amount.
-		rots := q.count - i
-		for j := 0; j < rots; j++ {
-			q.PushFront(q.PopBack())
-		}
+		// If inserting closer to back, put element at back, then swap
+		// elements until new element at specified position.
 		q.PushBack(elem)
-		for j := 0; j < rots; j++ {
-			q.PushBack(q.PopFront())
+		mod := (len(q.buf) - 1)
+		var x, y int
+		for j := q.count - 1; j > i; j-- {
+			x = (q.head + j) & mod
+			y = (q.head + j - 1) & mod
+			q.buf[x], q.buf[y] = q.buf[y], q.buf[x]
 		}
 	}
 }
@@ -189,31 +190,26 @@ func (q *Deque) Remove(i int) interface{} {
 	if i == q.count-1 {
 		return q.PopBack()
 	}
-	var elem interface{}
+	mod := len(q.buf) - 1
+	var x, y int
 	if i <= q.count/2 {
-		// If removing closer to front, rotate front to back i places, remove
-		// element at front, then rotate back to front i places.
-		for j := 0; j < i; j++ {
-			q.PushBack(q.PopFront())
+		// If removing closer to front, swap until element is at front and then
+		// remove it.
+		for ; i > 0; i-- {
+			x = (q.head + i - 1) & mod
+			y = (q.head + i) & mod
+			q.buf[x], q.buf[y] = q.buf[y], q.buf[x]
 		}
-		elem = q.PopFront()
-		for j := 0; j < i; j++ {
-			q.PushFront(q.PopBack())
-		}
-	} else {
-		// If removing closer to back, rotate back to front Len() - 1 - i
-		// places, remove element at back, then rotate front to back same
-		// amount.
-		rots := (q.count - 1) - i
-		for j := 0; j < rots; j++ {
-			q.PushFront(q.PopBack())
-		}
-		elem = q.PopBack()
-		for j := 0; j < rots; j++ {
-			q.PushBack(q.PopFront())
-		}
+		return q.PopFront()
 	}
-	return elem
+	// If removing closer to back, swap until element is at back and then
+	// remove it.
+	for ; i < q.count-1; i++ {
+		x = (q.head + i) & mod
+		y = (q.head + i + 1) & mod
+		q.buf[x], q.buf[y] = q.buf[y], q.buf[x]
+	}
+	return q.PopBack()
 }
 
 // Replace replaces the element at position i with the given element.  Accepts
