@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/gammazero/deque.svg)](https://travis-ci.org/gammazero/deque)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gammazero/deque)](https://goreportcard.com/report/github.com/gammazero/deque)
 [![codecov](https://codecov.io/gh/gammazero/deque/branch/master/graph/badge.svg)](https://codecov.io/gh/gammazero/deque)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/gammazero/deque/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Extremely fast ring-buffer deque ([double-ended queue](https://en.wikipedia.org/wiki/Double-ended_queue)) implementation.
 
@@ -14,6 +14,8 @@ This deque implementation is optimized for CPU and GC performance.  The circular
 The ring-buffer implementation significantly improves memory and time performance with fewer GC pauses, compared to implementations based on slices and linked lists.
 
 For maximum speed, this deque implementation leaves concurrency safety up to the application to provide, however the application chooses, if needed at all.
+
+For a pictorial description, see the [Deque diagram](https://github.com/gammazero/deque/wiki)
 
 ## Installation
 
