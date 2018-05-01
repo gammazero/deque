@@ -9,7 +9,7 @@ PushBack() and PopBack().
 
 Ring-buffer Performance
 
-The ring-buffer automatically re-sizes by
+The ring-buffer automatically resizes by
 powers of two, growing when additional capacity is needed and shrinking when
 only a quarter of the capacity is used, and uses bitwise arithmetic for all
 calculations.
@@ -23,7 +23,12 @@ the application to provide, however the application chooses, if needed at all.
 
 Reading Empty Deque
 
-Since it is OK for the deque to contain a nil value, it is necessary to either panic or return a second boolean value to indicate the deque is empty, when reading or removing an element.  This deque panics when reading from an empty deque.  This is a runtime check to help catch programming errors, which may be missed if a second return value is ignored.  Simply check Deque.Len() before reading from the deque.
+Since it is OK for the deque to contain a nil value, it is necessary to either
+panic or return a second boolean value to indicate the deque is empty, when
+reading or removing an element.  This deque panics when reading from an empty
+deque.  This is a run-time check to help catch programming errors, which may be
+missed if a second return value is ignored.  Simply check Deque.Len() before
+reading from the deque.
 
 */
 package deque
@@ -53,7 +58,7 @@ func (q *Deque) PushBack(elem interface{}) {
 
 	q.buf[q.tail] = elem
 	// Calculate new tail position.
-	q.tail = q.inc(q.tail)
+	q.tail = q.next(q.tail)
 	q.count++
 }
 
@@ -62,7 +67,7 @@ func (q *Deque) PushFront(elem interface{}) {
 	q.growIfFull()
 
 	// Calculate new head position.
-	q.head = q.dec(q.head)
+	q.head = q.prev(q.head)
 	q.buf[q.head] = elem
 	q.count++
 }
@@ -77,7 +82,7 @@ func (q *Deque) PopFront() interface{} {
 	ret := q.buf[q.head]
 	q.buf[q.head] = nil
 	// Calculate new head position.
-	q.head = q.inc(q.head)
+	q.head = q.next(q.head)
 	q.count--
 
 	q.shrinkIfExcess()
@@ -93,7 +98,7 @@ func (q *Deque) PopBack() interface{} {
 	}
 
 	// Calculate new tail position
-	q.tail = q.dec(q.tail)
+	q.tail = q.prev(q.tail)
 
 	// Remove value at tail.
 	ret := q.buf[q.tail]
@@ -121,11 +126,11 @@ func (q *Deque) Back() interface{} {
 	if q.count <= 0 {
 		panic("deque: Back() called when empty")
 	}
-	return q.buf[q.dec(q.tail)]
+	return q.buf[q.prev(q.tail)]
 }
 
 // Clear removes all elements from the queue, but retains the current capacity.
-// This is useful when repeatedly reusing the queue at high fequency to avoid
+// This is useful when repeatedly reusing the queue at high frequency to avoid
 // GC during reuse.  The queue will not be resized smaller as long as items are
 // only added.  Only when items are removed is the queue subject to getting
 // resized smaller.
@@ -186,13 +191,13 @@ func (q *Deque) Rotate(n int) {
 	}
 }
 
-// dec returns the next buffer position wrapping around buffer.
-func (q *Deque) dec(i int) int {
+// prev returns the previous buffer position wrapping around buffer.
+func (q *Deque) prev(i int) int {
 	return (i - 1) & (len(q.buf) - 1) // bitwise modulus
 }
 
-// inc returns the previous buffer position wrapping around buffer.
-func (q *Deque) inc(i int) int {
+// next returns the next buffer position wrapping around buffer.
+func (q *Deque) next(i int) int {
 	return (i + 1) & (len(q.buf) - 1) // bitwise modulus
 }
 
