@@ -52,9 +52,10 @@ func TestGrowShrink(t *testing.T) {
 	}
 	// Check that all values are as expected.
 	for i := 0; i < minCapacity*2; i++ {
-		if q.Get(i) != i {
-			t.Errorf("q.Get(%d) = %d, expected %d", i, q.Get(i), i)
+		if q.Front() != i {
+			t.Errorf("expected %d at position %d, got %d", i, i, q.Front())
 		}
+		q.Rotate(1)
 	}
 	bufLen := len(q.buf)
 
@@ -190,28 +191,6 @@ func TestLen(t *testing.T) {
 	}
 }
 
-func TestGet(t *testing.T) {
-	var q Deque
-
-	for i := 0; i < 1000; i++ {
-		q.PushBack(i)
-	}
-
-	// Front to back.
-	for j := 0; j < q.Len(); j++ {
-		if q.Get(j).(int) != j {
-			t.Errorf("index %d doesn't contain %d", j, j)
-		}
-	}
-
-	// Back to front
-	for j := 1; j <= q.Len(); j++ {
-		if q.Get(q.Len()-j).(int) != q.Len()-j {
-			t.Errorf("index %d doesn't contain %d", q.Len()-j, q.Len()-j)
-		}
-	}
-}
-
 func TestBack(t *testing.T) {
 	var q Deque
 
@@ -223,55 +202,16 @@ func TestBack(t *testing.T) {
 	}
 }
 
-func TestCopy(t *testing.T) {
+func checkRotate(t *testing.T, size int) {
 	var q Deque
-	a := make([]interface{}, minCapacity)
-	if q.Copy(a) != 0 {
-		t.Error("Copied wrong size, expected 0")
-	}
-
-	for i := 0; i < minCapacity/2; i++ {
-		q.PushBack(i)
-		q.PopFront()
-	}
-	for i := 0; i < minCapacity; i++ {
-		q.PushBack(i)
-	}
-	q.Copy(a)
-	for i := range a {
-		if a[i].(int) != i {
-			t.Error("Copy has wrong value at position", i)
-		}
-	}
-
-	a = []interface{}{}
-	if q.Copy(a) != 0 {
-		t.Error("Copied wrong size, expected 0")
-	}
-
-	a = make([]interface{}, q.Len()/2)
-	if q.Copy(a) != len(a) {
-		t.Error("Copied wrong size, expected", len(a))
-	}
-
-	a = make([]interface{}, q.Len()*2)
-	if q.Copy(a) != q.Len() {
-		t.Error("Copied wrong size", q.Len())
-	}
-}
-
-func TestRotate(t *testing.T) {
-	var q Deque
-	for i := 0; i < 10; i++ {
+	for i := 0; i < size; i++ {
 		q.PushBack(i)
 	}
 
-	a := make([]interface{}, q.Len())
 	for i := 0; i < q.Len(); i++ {
-		q.Copy(a)
 		x := i
-		for n := range a {
-			if a[n] != x {
+		for n := 0; n < q.Len(); n++ {
+			if get(q, n) != x {
 				t.Fatalf("a[%d] != %d after rotate and copy", n, x)
 			}
 			x++
@@ -279,20 +219,45 @@ func TestRotate(t *testing.T) {
 				x = 0
 			}
 		}
-
-		v := q.PopFront()
-		if v.(int) != i {
+		q.Rotate(1)
+		if q.Back().(int) != i {
 			t.Fatal("wrong value during rotation")
 		}
-		q.PushBack(v)
-
 	}
 	for i := q.Len() - 1; i >= 0; i-- {
-		v := q.PopBack()
-		if v.(int) != i {
+		q.Rotate(-1)
+		if q.Front().(int) != i {
 			t.Fatal("wrong value during reverse rotation")
 		}
-		q.PushFront(v)
+	}
+}
+
+func TestRotate(t *testing.T) {
+	checkRotate(t, 10)
+	checkRotate(t, minCapacity)
+	checkRotate(t, minCapacity+minCapacity/2)
+
+	var q Deque
+	for i := 0; i < 10; i++ {
+		q.PushBack(i)
+	}
+	q.Rotate(11)
+	if q.Front() != 1 {
+		t.Error("rotating 11 places should have been same as one")
+	}
+	q.Rotate(-21)
+	if q.Front() != 0 {
+		t.Error("rotating -21 places should have been same as one -1")
+	}
+	q.Rotate(q.Len())
+	if q.Front() != 0 {
+		t.Error("should not have rotated")
+	}
+	q.Clear()
+	q.PushBack(0)
+	q.Rotate(13)
+	if q.Front() != 0 {
+		t.Error("should not have rotated")
 	}
 }
 
@@ -324,113 +289,55 @@ func TestClear(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	var q Deque
-	q.PushBack("A")
-	q.PushBack("B")
-	q.PushBack("C")
-	q.PushBack("D")
-	q.PushBack("E")
-	q.PushBack("F")
-	q.PushBack("G")
-
-	q.Insert(4, "x")
-	if q.Get(4) != "x" {
-		t.Error("expected x at position 4")
+	q := new(Deque)
+	for _, x := range "ABCDEFG" {
+		q.PushBack(x)
 	}
+	insert(q, 4, 'x')       // ABCDxEFG
+	insert(q, 2, 'y')       // AByCDxEFG
+	insert(q, 0, 'b')       // bAByCDxEFG
+	insert(q, q.Len(), 'e') // bAByCDxEFGe
 
-	q.Insert(2, "y")
-	if q.Get(2) != "y" {
-		t.Error("expected y at position 2")
-	}
-
-	if q.Get(5) != "x" {
-		t.Error("expected x at position 5")
-	}
-
-	q.Insert(0, "b")
-	if q.Front() != "b" {
-		t.Error("expected b inserted at front")
-	}
-
-	q.Insert(q.Len(), "e")
-	if q.Back() != "e" {
-		t.Error("expected e inserted at back")
+	for i, x := range "bAByCDxEFGe" {
+		if q.PopFront() != x {
+			t.Error("expected", x, "at position", i)
+		}
 	}
 }
 
 func TestRemove(t *testing.T) {
-	var q Deque
-	q.PushBack("A")
-	q.PushBack("B")
-	q.PushBack("C")
-	q.PushBack("D")
-	q.PushBack("E")
-	q.PushBack("F")
-	q.PushBack("G")
+	q := new(Deque)
+	for _, x := range "ABCDEFG" {
+		q.PushBack(x)
+	}
 
-	if q.Remove(4) != "E" {
+	if remove(q, 4) != 'E' { // ABCDFG
 		t.Error("expected E from position 4")
 	}
-	if q.Get(4) != "F" {
-		t.Error("expected F at position 4")
-	}
-
-	if q.Remove(2) != "C" {
+	if remove(q, 2) != 'C' { // ABDFG
 		t.Error("expected C at position 2")
 	}
-	if q.Get(2) != "D" {
-		t.Error("expected D at position 4")
+	if q.Back() != 'G' {
+		t.Error("expected G at back")
 	}
 
-	if q.Get(4) != "G" {
-		t.Error("expected G at position 4")
-	}
-
-	if q.Remove(0) != "A" {
+	if remove(q, 0) != 'A' { // BDFG
 		t.Error("expected to remove A from front")
 	}
+	if q.Front() != 'B' {
+		t.Error("expected G at back")
+	}
 
-	if q.Remove(q.Len()-1) != "G" {
+	if remove(q, q.Len()-1) != 'G' { // BDF
 		t.Error("expected to remove G from back")
 	}
-}
-
-func TestReplace(t *testing.T) {
-	var q Deque
-	q.PushBack("a")
-	q.PushBack("b")
-	q.PushBack("c")
-
-	q.Replace(0, "A")
-	if q.Front() != "A" {
-		t.Error("expected A at front")
+	if q.Back() != 'F' {
+		t.Error("expected F at back")
 	}
 
-	q.Replace(q.Len()-1, "C")
-	if q.Back() != "C" {
-		t.Error("expected C at back")
+	if q.Len() != 3 {
+		t.Error("wrong length")
 	}
-
-	q.Replace(1, "-")
-	if q.Get(1) != "-" {
-		t.Error("expected - at position 1")
-	}
-}
-
-func TestGetOutOfRangePanics(t *testing.T) {
-	var q Deque
-
-	q.PushBack(1)
-	q.PushBack(2)
-	q.PushBack(3)
-
-	assertPanics(t, "should panic when negative index", func() {
-		q.Get(-4)
-	})
-
-	assertPanics(t, "should panic when index greater than length", func() {
-		q.Get(4)
-	})
 }
 
 func TestFrontBackOutOfRangePanics(t *testing.T) {
@@ -485,56 +392,38 @@ func TestPopBackOutOfRangePanics(t *testing.T) {
 }
 
 func TestInsertOutOfRangePanics(t *testing.T) {
-	var q Deque
+	q := new(Deque)
 
 	assertPanics(t, "should panic when inserting out of range", func() {
-		q.Insert(1, "X")
+		insert(q, 1, "X")
 	})
 
 	q.PushBack("A")
 
 	assertPanics(t, "should panic when inserting at negative index", func() {
-		q.Insert(-1, "Y")
+		insert(q, -1, "Y")
 	})
 
 	assertPanics(t, "should panic when inserting out of range", func() {
-		q.Insert(2, "B")
+		insert(q, 2, "B")
 	})
 }
 
 func TestRemoveOutOfRangePanics(t *testing.T) {
-	var q Deque
+	q := new(Deque)
 
 	assertPanics(t, "should panic when removing from empty queue", func() {
-		q.Remove(0)
+		remove(q, 0)
 	})
 
 	q.PushBack("A")
 
 	assertPanics(t, "should panic when removing at negative index", func() {
-		q.Remove(-1)
+		remove(q, -1)
 	})
 
 	assertPanics(t, "should panic when removing out of range", func() {
-		q.Remove(1)
-	})
-}
-
-func TestReplaceOutOfRangePanics(t *testing.T) {
-	var q Deque
-
-	assertPanics(t, "should panic when replacing in empty queue", func() {
-		q.Replace(0, "x")
-	})
-
-	q.PushBack("A")
-
-	assertPanics(t, "should panic when replacing at negative index", func() {
-		q.Replace(-1, "Z")
-	})
-
-	assertPanics(t, "should panic when replacing out of range", func() {
-		q.Replace(1, "Y")
+		remove(q, 1)
 	})
 }
 
@@ -583,37 +472,106 @@ func BenchmarkSerialReverse(b *testing.B) {
 }
 
 func BenchmarkRotate(b *testing.B) {
-	var q Deque
+	q := new(Deque)
 	for i := 0; i < b.N; i++ {
 		q.PushBack(i)
 	}
 	b.ResetTimer()
-	// N complete rotations on length N.
+	// N complete rotations on length N - 1.
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < b.N; j++ {
-			q.PushBack(q.PopFront())
-		}
+		q.Rotate(b.N - 1)
 	}
 }
 
 func BenchmarkInsert(b *testing.B) {
-	var q Deque
+	q := new(Deque)
 	for i := 0; i < b.N; i++ {
 		q.PushBack(i)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		q.Insert(q.Len()/2, -i)
+		insert(q, q.Len()/2, -i)
 	}
 }
 
 func BenchmarkRemove(b *testing.B) {
-	var q Deque
+	q := new(Deque)
 	for i := 0; i < b.N; i++ {
 		q.PushBack(i)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		q.Remove(q.Len() / 2)
+		remove(q, q.Len()/2)
 	}
+}
+
+// insert is used to insert an element into the middle of the queue, before the
+// element at the specified index.  insert(0,e) is the same as PushFront(e) and
+// insert(Len(),e) is the same as PushBack(e).  Complexity is constant plus
+// linear in the lesser of the distances between i and either of the ends of
+// the queue.  Accepts only non-negative index values, and panics if index is
+// out of range.
+func insert(q *Deque, i int, elem interface{}) {
+	if i < 0 || i > q.Len() {
+		panic("deque: Insert() called with index out of range")
+	}
+	if i == 0 {
+		q.PushFront(elem)
+		return
+	}
+	if i == q.Len() {
+		q.PushBack(elem)
+		return
+	}
+	if i <= q.Len()/2 {
+		q.Rotate(i)
+		q.PushFront(elem)
+		q.Rotate(-i)
+	} else {
+		rots := q.Len() - i
+		q.Rotate(-rots)
+		q.PushBack(elem)
+		q.Rotate(rots)
+	}
+}
+
+// remove removes and returns an element from the middle of the queue, at the
+// specified index.  remove(0) is the same as PopFront() and remove(Len()-1) is
+// the same as PopBack().  Complexity is constant plus linear in the lesser of
+// the distances between i and either of the ends of the queue.  Accepts only
+// non-negative index values, and panics if index is out of range.
+func remove(q *Deque, i int) interface{} {
+	if i < 0 || i >= q.Len() {
+		panic("deque: Remove() called with index out of range")
+	}
+	if i == 0 {
+		return q.PopFront()
+	}
+	if i == q.Len()-1 {
+		return q.PopBack()
+	}
+	if i <= q.Len()/2 {
+		q.Rotate(i)
+		elem := q.PopFront()
+		q.Rotate(-i)
+		return elem
+	}
+	rots := q.Len() - 1 - i
+	q.Rotate(-rots)
+	elem := q.PopBack()
+	q.Rotate(rots)
+	return elem
+}
+
+// get returns the element at index i in the queue without removing the element
+// from the queue.  This method accepts only non-negative index values.  get(0)
+// refers to the first element and is the same as Front().  get(Len()-1) refers
+// to the last element and is the same as Back().  If the index is invalid, the
+// call panics.
+func get(q Deque, i int) interface{} {
+	if i < 0 || i >= q.count {
+		panic("deque: get() called with index out of range")
+	}
+	// bitwise modulus
+	return q.buf[(q.head+i)&(len(q.buf)-1)]
 }

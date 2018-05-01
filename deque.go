@@ -1,8 +1,18 @@
 /*
 Package deque provides a fast ring-buffer deque (double-ended queue)
-implementation.  The ring-buffer automatically re-sizes by powers of two,
-growing when additional capacity is needed and shrinking when only a quarter of
-the capacity is used, and uses bitwise arithmetic for all calculations.
+implementation.
+
+Deque generalizes a queue and a stack, to efficiently add and remove items at
+either end with O(1) performance.  Queue (FIFO) operations are supported using
+PushBack() and PopFront().  Stack (LIFO) operations are supported using
+PushBack() and PopBack().
+
+Ring-buffer Performance
+
+The ring-buffer automatically re-sizes by
+powers of two, growing when additional capacity is needed and shrinking when
+only a quarter of the capacity is used, and uses bitwise arithmetic for all
+calculations.
 
 The ring-buffer implementation significantly improves memory and time
 performance with fewer GC pauses, compared to implementations based on slices
@@ -11,8 +21,9 @@ and linked lists.
 For maximum speed, this deque implementation leaves concurrency safety up to
 the application to provide, however the application chooses, if needed at all.
 
-Queue (FIFO) operations are supported using PushBack() and PopFront().  Stack
-(LIFO) operations are supported using PushBack() and PopBack().
+Reading Empty Deque
+
+Since it is OK for the deque to contain a nil value, it is necessary to either panic or return a second boolean value to indicate the deque is empty, when reading or removing an element.  This deque panics when reading from an empty deque.  This is a runtime check to help catch programming errors, which may be missed if a second return value is ignored.  Simply check Deque.Len() before reading from the deque.
 
 */
 package deque
@@ -38,24 +49,20 @@ func (q *Deque) Len() int {
 // elements are removed with PopFront(), and LIFO when elements are removed
 // with PopBack().
 func (q *Deque) PushBack(elem interface{}) {
-	if q.count == len(q.buf) {
-		q.resize()
-	}
+	q.growIfFull()
 
 	q.buf[q.tail] = elem
-	// calculate new tail using bitwise modulus
-	q.tail = (q.tail + 1) & (len(q.buf) - 1)
+	// Calculate new tail position.
+	q.tail = q.inc(q.tail)
 	q.count++
 }
 
 // PushFront prepends an element to the front of the queue.
 func (q *Deque) PushFront(elem interface{}) {
-	if q.count == len(q.buf) {
-		q.resize()
-	}
+	q.growIfFull()
 
-	// calculate new head using bitwise modulus
-	q.head = (q.head - 1) & (len(q.buf) - 1)
+	// Calculate new head position.
+	q.head = q.dec(q.head)
 	q.buf[q.head] = elem
 	q.count++
 }
@@ -69,13 +76,11 @@ func (q *Deque) PopFront() interface{} {
 	}
 	ret := q.buf[q.head]
 	q.buf[q.head] = nil
-	// Calculate new head using bitwise modulus.
-	q.head = (q.head + 1) & (len(q.buf) - 1)
+	// Calculate new head position.
+	q.head = q.inc(q.head)
 	q.count--
-	// Resize down if buffer 1/4 full.
-	if len(q.buf) > minCapacity && (q.count<<2) == len(q.buf) {
-		q.resize()
-	}
+
+	q.shrinkIfExcess()
 	return ret
 }
 
@@ -87,18 +92,15 @@ func (q *Deque) PopBack() interface{} {
 		panic("deque: PopBack() called on empty queue")
 	}
 
-	// Calculate new tail using bitwise modulus.
-	q.tail = (q.tail - 1) & (len(q.buf) - 1)
+	// Calculate new tail position
+	q.tail = q.dec(q.tail)
 
 	// Remove value at tail.
 	ret := q.buf[q.tail]
 	q.buf[q.tail] = nil
 	q.count--
 
-	// Resize down if buffer 1/4 full.
-	if len(q.buf) > minCapacity && (q.count<<2) == len(q.buf) {
-		q.resize()
-	}
+	q.shrinkIfExcess()
 	return ret
 }
 
@@ -107,7 +109,7 @@ func (q *Deque) PopBack() interface{} {
 // empty.
 func (q *Deque) Front() interface{} {
 	if q.count <= 0 {
-		panic("deque: Front() called on empty queue")
+		panic("deque: Front() called when empty")
 	}
 	return q.buf[q.head]
 }
@@ -117,118 +119,20 @@ func (q *Deque) Front() interface{} {
 // empty.
 func (q *Deque) Back() interface{} {
 	if q.count <= 0 {
-		panic("deque: Back() called on empty queue")
+		panic("deque: Back() called when empty")
 	}
-	// bitwise modulus
-	return q.buf[(q.tail-1)&(len(q.buf)-1)]
-}
-
-// Get returns the element at index i in the queue.  This method accepts only
-// non-negative index values.  Get(0) refers to the first element and is the
-// same as Front().  Get(Len()-1) refers to the last element and is the same
-// as Back().  If the index is invalid, the call panics.
-func (q *Deque) Get(i int) interface{} {
-	if i < 0 || i >= q.count {
-		panic("deque: Get() called with index out of range")
-	}
-	// bitwise modulus
-	return q.buf[(q.head+i)&(len(q.buf)-1)]
-}
-
-// Insert is used to insert an element into the middle of the queue.
-// Insert(0,e) is the same as PushFront(e) and Insert(Len(),e) is the same as
-// PushBack(e).  Accepts only non-negative index values, and panics if index is
-// out of range.
-func (q *Deque) Insert(i int, elem interface{}) {
-	if i < 0 || i > q.count {
-		panic("deque: Insert() called with index out of range")
-	}
-	if i == 0 {
-		q.PushFront(elem)
-		return
-	}
-	if i == q.count {
-		q.PushBack(elem)
-		return
-	}
-	if i <= q.count/2 {
-		// If inserting closer to front, put element at front, then swap
-		// elements until new element at specified position.
-		q.PushFront(elem)
-		mod := (len(q.buf) - 1)
-		var x, y int
-		for j := 0; j < i; j++ {
-			x = (q.head + j) & mod
-			y = (q.head + j + 1) & mod
-			q.buf[x], q.buf[y] = q.buf[y], q.buf[x]
-		}
-	} else {
-		// If inserting closer to back, put element at back, then swap
-		// elements until new element at specified position.
-		q.PushBack(elem)
-		mod := (len(q.buf) - 1)
-		var x, y int
-		for j := q.count - 1; j > i; j-- {
-			x = (q.head + j) & mod
-			y = (q.head + j - 1) & mod
-			q.buf[x], q.buf[y] = q.buf[y], q.buf[x]
-		}
-	}
-}
-
-// Remove removes and returns an element from the middle of the queue.
-// Remove(0) is the same as PopFront() and Remove(Len()-1) is the same as
-// PopBack().  Accepts only non-negative index values, and panics if index is
-// out of range.
-func (q *Deque) Remove(i int) interface{} {
-	if i < 0 || i >= q.count {
-		panic("deque: Remove() called with index out of range")
-	}
-	if i == 0 {
-		return q.PopFront()
-	}
-	if i == q.count-1 {
-		return q.PopBack()
-	}
-	mod := len(q.buf) - 1
-	var x, y int
-	if i <= q.count/2 {
-		// If removing closer to front, swap until element is at front and then
-		// remove it.
-		for ; i > 0; i-- {
-			x = (q.head + i - 1) & mod
-			y = (q.head + i) & mod
-			q.buf[x], q.buf[y] = q.buf[y], q.buf[x]
-		}
-		return q.PopFront()
-	}
-	// If removing closer to back, swap until element is at back and then
-	// remove it.
-	for ; i < q.count-1; i++ {
-		x = (q.head + i) & mod
-		y = (q.head + i + 1) & mod
-		q.buf[x], q.buf[y] = q.buf[y], q.buf[x]
-	}
-	return q.PopBack()
-}
-
-// Replace replaces the element at position i with the given element.  Accepts
-// only non-negative index values, and panics if index is out of range
-func (q *Deque) Replace(i int, elem interface{}) {
-	if i < 0 || i >= q.count {
-		panic("deque: Remove() called with index out of range")
-	}
-	// bitwise modulus
-	q.buf[(q.head+i)&(len(q.buf)-1)] = elem
+	return q.buf[q.dec(q.tail)]
 }
 
 // Clear removes all elements from the queue, but retains the current capacity.
-// The queue will not be resized smaller as long as items are only added.
-// Only when items are removed is the queue subject to getting resized smaller.
+// This is useful when repeatedly reusing the queue at high fequency to avoid
+// GC during reuse.  The queue will not be resized smaller as long as items are
+// only added.  Only when items are removed is the queue subject to getting
+// resized smaller.
 func (q *Deque) Clear() {
 	// bitwise modulus
-	mbits := len(q.buf) - 1
-	for h := q.head; h != q.tail; h = (h + 1) & mbits {
+	modBits := len(q.buf) - 1
+	for h := q.head; h != q.tail; h = (h + 1) & modBits {
 		q.buf[h] = nil
 	}
 	q.head = 0
@@ -236,35 +140,84 @@ func (q *Deque) Clear() {
 	q.count = 0
 }
 
-// Copy copies elements from the queue to the destination slice, from front to
-// back.  Copy returns the number of elements copied, which will be the minimum
-// of q.Len() and len(dst).
-func (q *Deque) Copy(dst []interface{}) int {
-	count := q.count
-	if len(dst) < q.count {
-		count = len(dst)
+// Rotate rotates the deque n steps front-to-back.  If n is negative, rotates
+// back-to-front.  Having Deque provide Rotate() avoids resizing, that could
+// not be may happen if implementing rotation using Pop and Push methods.
+func (q *Deque) Rotate(n int) {
+	if q.count <= 1 {
+		return
 	}
-	if count == 0 {
-		return 0
+	// Rotating a multiple of q.count is same as no rotation.
+	n %= q.count
+	if n == 0 {
+		return
 	}
-	if q.head+count <= len(q.buf) {
-		copy(dst, q.buf[q.head:q.head+count])
-	} else {
-		n := copy(dst, q.buf[q.head:])
-		copy(dst[n:], q.buf[:count-n])
+
+	modBits := len(q.buf) - 1
+	// If no empty space in buffer, only move head and tail indexes.
+	if q.head == q.tail {
+		// Calculate new head and tail using bitwise modulus.
+		q.head = (q.head + n) & modBits
+		q.tail = (q.tail + n) & modBits
+		return
 	}
-	return count
+
+	if n < 0 {
+		// Rotate back to front.
+		for ; n < 0; n++ {
+			// Calculate new head and tail using bitwise modulus.
+			q.head = (q.head - 1) & modBits
+			q.tail = (q.tail - 1) & modBits
+			// Put tail value at head and remove value at tail.
+			q.buf[q.head] = q.buf[q.tail]
+			q.buf[q.tail] = nil
+		}
+		return
+	}
+
+	// Rotate front to back.
+	for ; n > 0; n-- {
+		// Put head value at tail and remove value at head.
+		q.buf[q.tail] = q.buf[q.head]
+		q.buf[q.head] = nil
+		// Calculate new head and tail using bitwise modulus.
+		q.head = (q.head + 1) & modBits
+		q.tail = (q.tail + 1) & modBits
+	}
+}
+
+// dec returns the next buffer position wrapping around buffer.
+func (q *Deque) dec(i int) int {
+	return (i - 1) & (len(q.buf) - 1) // bitwise modulus
+}
+
+// inc returns the previous buffer position wrapping around buffer.
+func (q *Deque) inc(i int) int {
+	return (i + 1) & (len(q.buf) - 1) // bitwise modulus
+}
+
+// growIfFull resizes up if the buffer is full.
+func (q *Deque) growIfFull() {
+	if len(q.buf) == 0 {
+		q.buf = make([]interface{}, minCapacity)
+		return
+	}
+	if q.count == len(q.buf) {
+		q.resize()
+	}
+}
+
+// shrinkIfExcess resize down if the buffer 1/4 full.
+func (q *Deque) shrinkIfExcess() {
+	if len(q.buf) > minCapacity && (q.count<<2) == len(q.buf) {
+		q.resize()
+	}
 }
 
 // resize resizes the deque to fit exactly twice its current contents.
 // This results in shrinking if the queue is less than half-full, or growing
 // the queue when it is full.
 func (q *Deque) resize() {
-	if len(q.buf) == 0 {
-		q.buf = make([]interface{}, minCapacity)
-		return
-	}
-
 	newBuf := make([]interface{}, q.count<<1)
 	if q.tail > q.head {
 		copy(newBuf, q.buf[q.head:q.tail])
