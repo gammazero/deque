@@ -9,6 +9,8 @@ Extremely fast ring-buffer deque ([double-ended queue](https://en.wikipedia.org/
 
 [![GoDoc](https://godoc.org/github.com/gammazero/deque?status.svg)](https://godoc.org/github.com/gammazero/deque)
 
+For a pictorial description, see the [Deque diagram](https://github.com/gammazero/deque/wiki)
+
 ## Installation
 
 ```
@@ -30,8 +32,6 @@ For maximum speed, this deque implementation leaves concurrency safety up to the
 ## Reading Empty Deque
 
 Since it is OK for the deque to contain a nil value, it is necessary to either panic or return a second boolean value to indicate the deque is empty, when reading or removing an element.  This deque panics when reading from an empty deque.  This is a run-time check to help catch programming errors, which may be missed if a second return value is ignored.  Simply check Deque.Len() before reading from the deque.
-
-For a pictorial description, see the [Deque diagram](https://github.com/gammazero/deque/wiki)
 
 ## Example
 
