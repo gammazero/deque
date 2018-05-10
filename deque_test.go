@@ -211,7 +211,7 @@ func checkRotate(t *testing.T, size int) {
 	for i := 0; i < q.Len(); i++ {
 		x := i
 		for n := 0; n < q.Len(); n++ {
-			if get(q, n) != x {
+			if q.At(n) != x {
 				t.Fatalf("a[%d] != %d after rotate and copy", n, x)
 			}
 			x++
@@ -261,6 +261,28 @@ func TestRotate(t *testing.T) {
 	}
 }
 
+func TestAt(t *testing.T) {
+	var q Deque
+
+	for i := 0; i < 1000; i++ {
+		q.PushBack(i)
+	}
+
+	// Front to back.
+	for j := 0; j < q.Len(); j++ {
+		if q.At(j).(int) != j {
+			t.Errorf("index %d doesn't contain %d", j, j)
+		}
+	}
+
+	// Back to front
+	for j := 1; j <= q.Len(); j++ {
+		if q.At(q.Len()-j).(int) != q.Len()-j {
+			t.Errorf("index %d doesn't contain %d", q.Len()-j, q.Len()-j)
+		}
+	}
+}
+
 func TestClear(t *testing.T) {
 	var q Deque
 
@@ -293,9 +315,24 @@ func TestInsert(t *testing.T) {
 	for _, x := range "ABCDEFG" {
 		q.PushBack(x)
 	}
-	insert(q, 4, 'x')       // ABCDxEFG
-	insert(q, 2, 'y')       // AByCDxEFG
-	insert(q, 0, 'b')       // bAByCDxEFG
+	insert(q, 4, 'x') // ABCDxEFG
+	if q.At(4) != 'x' {
+		t.Error("expected x at position 4")
+	}
+
+	insert(q, 2, 'y') // AByCDxEFG
+	if q.At(2) != 'y' {
+		t.Error("expected y at position 2")
+	}
+	if q.At(5) != 'x' {
+		t.Error("expected x at position 5")
+	}
+
+	insert(q, 0, 'b') // bAByCDxEFG
+	if q.Front() != 'b' {
+		t.Error("expected b inserted at front")
+	}
+
 	insert(q, q.Len(), 'e') // bAByCDxEFGe
 
 	for i, x := range "bAByCDxEFGe" {
@@ -314,8 +351,15 @@ func TestRemove(t *testing.T) {
 	if remove(q, 4) != 'E' { // ABCDFG
 		t.Error("expected E from position 4")
 	}
+	if q.At(4) != 'F' {
+		t.Error("expected F at position 4")
+	}
+
 	if remove(q, 2) != 'C' { // ABDFG
 		t.Error("expected C at position 2")
+	}
+	if q.At(2) != 'D' {
+		t.Error("expected D at position 4")
 	}
 	if q.Back() != 'G' {
 		t.Error("expected G at back")
@@ -388,6 +432,22 @@ func TestPopBackOutOfRangePanics(t *testing.T) {
 
 	assertPanics(t, "should panic when removing emptied queue", func() {
 		q.PopBack()
+	})
+}
+
+func TestAtOutOfRangePanics(t *testing.T) {
+	var q Deque
+
+	q.PushBack(1)
+	q.PushBack(2)
+	q.PushBack(3)
+
+	assertPanics(t, "should panic when negative index", func() {
+		q.At(-4)
+	})
+
+	assertPanics(t, "should panic when index greater than length", func() {
+		q.At(4)
 	})
 }
 
@@ -561,17 +621,4 @@ func remove(q *Deque, i int) interface{} {
 	elem := q.PopBack()
 	q.Rotate(rots)
 	return elem
-}
-
-// get returns the element at index i in the queue without removing the element
-// from the queue.  This method accepts only non-negative index values.  get(0)
-// refers to the first element and is the same as Front().  get(Len()-1) refers
-// to the last element and is the same as Back().  If the index is invalid, the
-// call panics.
-func get(q Deque, i int) interface{} {
-	if i < 0 || i >= q.count {
-		panic("deque: get() called with index out of range")
-	}
-	// bitwise modulus
-	return q.buf[(q.head+i)&(len(q.buf)-1)]
 }
