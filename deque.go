@@ -129,6 +129,27 @@ func (q *Deque) Back() interface{} {
 	return q.buf[q.prev(q.tail)]
 }
 
+// Get returns the element at index i in the queue without removing the element
+// from the queue.  This method accepts only non-negative index values.  get(0)
+// refers to the first element and is the same as Front().  get(Len()-1) refers
+// to the last element and is the same as Back().  If the index is invalid, the
+// call panics.
+//
+// The purpose of Get is to allow Deque to serve as a more general purpose
+// circular buffer, such as an LRU cache or a circular log.  For such uses,
+// items are only added to and removed from the the ends of the deque, but may
+// be read from any place within the deque.  Consider the case of a circular
+// log buffer, where new entries are pushed on one end and the oldest entries
+// are popped from the other end, and any/all of the entries in the buffer must
+// be readable without altering the buffer contents.
+func (q *Deque) At(i int) interface{} {
+	if i < 0 || i >= q.count {
+		panic("deque: Get() called with index out of range")
+	}
+	// bitwise modulus
+	return q.buf[(q.head+i)&(len(q.buf)-1)]
+}
+
 // Clear removes all elements from the queue, but retains the current capacity.
 // This is useful when repeatedly reusing the queue at high frequency to avoid
 // GC during reuse.  The queue will not be resized smaller as long as items are
