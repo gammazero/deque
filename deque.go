@@ -136,12 +136,11 @@ func (q *Deque) Back() interface{} {
 // call panics.
 //
 // The purpose of Get is to allow Deque to serve as a more general purpose
-// circular buffer, such as an LRU cache or a circular log.  For such uses,
-// items are only added to and removed from the the ends of the deque, but may
-// be read from any place within the deque.  Consider the case of a circular
-// log buffer, where new entries are pushed on one end and the oldest entries
-// are popped from the other end, and any/all of the entries in the buffer must
-// be readable without altering the buffer contents.
+// circular buffer, where items are only added to and removed from the the ends
+// of the deque, but may be read from any place within the deque.  Consider the
+// case of a fixed-size circular log buffer: A new entry is pushed onto one end
+// and when full the oldest is popped from the other end.  All the log entries
+// in the buffer must be readable without altering the buffer contents.
 func (q *Deque) At(i int) interface{} {
 	if i < 0 || i >= q.count {
 		panic("deque: Get() called with index out of range")
