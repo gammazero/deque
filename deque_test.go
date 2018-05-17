@@ -42,25 +42,20 @@ func TestFrontBack(t *testing.T) {
 	}
 }
 
-func TestGrowShrink(t *testing.T) {
+func TestGrowShrinkBack(t *testing.T) {
 	var q Deque
-	for i := 0; i < minCapacity*2; i++ {
+	size := minCapacity * 2
+
+	for i := 0; i < size; i++ {
 		if q.Len() != i {
 			t.Error("q.Len() =", q.Len(), "expected", i)
 		}
 		q.PushBack(i)
 	}
-	// Check that all values are as expected.
-	for i := 0; i < minCapacity*2; i++ {
-		if q.Front() != i {
-			t.Errorf("expected %d at position %d, got %d", i, i, q.Front())
-		}
-		q.Rotate(1)
-	}
 	bufLen := len(q.buf)
 
 	// Remove from back.
-	for i := minCapacity * 2; i > 0; i-- {
+	for i := size; i > 0; i-- {
 		if q.Len() != i {
 			t.Error("q.Len() =", q.Len(), "expected", i)
 		}
@@ -75,19 +70,23 @@ func TestGrowShrink(t *testing.T) {
 	if len(q.buf) == bufLen {
 		t.Error("queue buffer did not shrink")
 	}
+}
 
-	// Fill up queue again.
-	for i := 0; i < minCapacity*2; i++ {
+func TestGrowShrinkFront(t *testing.T) {
+	var q Deque
+	size := minCapacity * 2
+
+	for i := 0; i < size; i++ {
 		if q.Len() != i {
 			t.Error("q.Len() =", q.Len(), "expected", i)
 		}
 		q.PushBack(i)
 	}
-	bufLen = len(q.buf)
+	bufLen := len(q.buf)
 
 	// Remove from Front
-	for i := 0; i < minCapacity*2; i++ {
-		if q.Len() != minCapacity*2-i {
+	for i := 0; i < size; i++ {
+		if q.Len() != size-i {
 			t.Error("q.Len() =", q.Len(), "expected", minCapacity*2-i)
 		}
 		x := q.PopFront()
@@ -351,15 +350,9 @@ func TestRemove(t *testing.T) {
 	if remove(q, 4) != 'E' { // ABCDFG
 		t.Error("expected E from position 4")
 	}
-	if q.At(4) != 'F' {
-		t.Error("expected F at position 4")
-	}
 
 	if remove(q, 2) != 'C' { // ABDFG
 		t.Error("expected C at position 2")
-	}
-	if q.At(2) != 'D' {
-		t.Error("expected D at position 4")
 	}
 	if q.Back() != 'G' {
 		t.Error("expected G at back")
