@@ -1,36 +1,3 @@
-/*
-Package deque provides a fast ring-buffer deque (double-ended queue)
-implementation.
-
-Deque generalizes a queue and a stack, to efficiently add and remove items at
-either end with O(1) performance.  Queue (FIFO) operations are supported using
-PushBack() and PopFront().  Stack (LIFO) operations are supported using
-PushBack() and PopBack().
-
-Ring-buffer Performance
-
-The ring-buffer automatically resizes by
-powers of two, growing when additional capacity is needed and shrinking when
-only a quarter of the capacity is used, and uses bitwise arithmetic for all
-calculations.
-
-The ring-buffer implementation significantly improves memory and time
-performance with fewer GC pauses, compared to implementations based on slices
-and linked lists.
-
-For maximum speed, this deque implementation leaves concurrency safety up to
-the application to provide, however the application chooses, if needed at all.
-
-Reading Empty Deque
-
-Since it is OK for the deque to contain a nil value, it is necessary to either
-panic or return a second boolean value to indicate the deque is empty, when
-reading or removing an element.  This deque panics when reading from an empty
-deque.  This is a run-time check to help catch programming errors, which may be
-missed if a second return value is ignored.  Simply check Deque.Len() before
-reading from the deque.
-
-*/
 package deque
 
 // minCapacity is the smallest capacity that deque may have.
@@ -129,13 +96,13 @@ func (q *Deque) Back() interface{} {
 	return q.buf[q.prev(q.tail)]
 }
 
-// Get returns the element at index i in the queue without removing the element
-// from the queue.  This method accepts only non-negative index values.  get(0)
-// refers to the first element and is the same as Front().  get(Len()-1) refers
+// At returns the element at index i in the queue without removing the element
+// from the queue.  This method accepts only non-negative index values.  At(0)
+// refers to the first element and is the same as Front().  At(Len()-1) refers
 // to the last element and is the same as Back().  If the index is invalid, the
 // call panics.
 //
-// The purpose of Get is to allow Deque to serve as a more general purpose
+// The purpose of At is to allow Deque to serve as a more general purpose
 // circular buffer, where items are only added to and removed from the the ends
 // of the deque, but may be read from any place within the deque.  Consider the
 // case of a fixed-size circular log buffer: A new entry is pushed onto one end
@@ -143,7 +110,7 @@ func (q *Deque) Back() interface{} {
 // in the buffer must be readable without altering the buffer contents.
 func (q *Deque) At(i int) interface{} {
 	if i < 0 || i >= q.count {
-		panic("deque: Get() called with index out of range")
+		panic("deque: At() called with index out of range")
 	}
 	// bitwise modulus
 	return q.buf[(q.head+i)&(len(q.buf)-1)]
