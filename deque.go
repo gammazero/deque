@@ -206,9 +206,9 @@ func (q *Deque) shrinkIfExcess() {
 	}
 }
 
-// resize resizes the deque to fit exactly twice its current contents.
-// This results in shrinking if the queue is less than half-full, or growing
-// the queue when it is full.
+// resize resizes the deque to fit exactly twice its current contents.  This is
+// used to grow the queue when it is full, and also to shrink it when it is
+// only a quarter full.
 func (q *Deque) resize() {
 	newBuf := make([]interface{}, q.count<<1)
 	if q.tail > q.head {
