@@ -133,8 +133,8 @@ func (q *Deque) Clear() {
 }
 
 // Rotate rotates the deque n steps front-to-back.  If n is negative, rotates
-// back-to-front.  Having Deque provide Rotate() avoids resizing, that could
-// not be may happen if implementing rotation using Pop and Push methods.
+// back-to-front.  Having Deque provide Rotate() avoids resizing that could
+// happen if implementing rotation using only Pop and Push methods.
 func (q *Deque) Rotate(n int) {
 	if q.count <= 1 {
 		return
