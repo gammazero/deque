@@ -59,7 +59,7 @@ func main() {
     q.PushFront("hello")
     q.PushBack("world")
 
-	// Consume deque and print elements.
+    // Consume deque and print elements.
     for q.Len() != 0 {
         fmt.Println(q.PopFront())
     }
