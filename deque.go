@@ -13,17 +13,6 @@ type Deque struct {
 	minCap int
 }
 
-// New creates a new Deque that has a minimum capacity of 2^minCapacityExp.  If
-// the value of the minimum capacity is less than or equal to the minimum
-// allowed, then New returns the same as new(Deque).
-func New(minCapacityExp uint) *Deque {
-	q := new(Deque)
-	if 1<<minCapacityExp > minCapacity {
-		q.minCap = 1 << minCapacityExp
-	}
-	return q
-}
-
 // Len returns the number of elements currently stored in the queue.
 func (q *Deque) Len() int {
 	return q.count
@@ -187,6 +176,21 @@ func (q *Deque) Rotate(n int) {
 		// Calculate new head and tail using bitwise modulus.
 		q.head = (q.head + 1) & modBits
 		q.tail = (q.tail + 1) & modBits
+	}
+}
+
+// SetMinCapacity sets a minimum capacity of 2^minCapacityExp.  If the value of
+// the minimum capacity is less than or equal to the minimum allowed, then
+// capacity is set to the minimum allowed.  This may be called at anytime to
+// set a new minimum capacity.
+//
+// Setting a larger minimum capacity may be used to prevent resizing when the
+// number of stored items changes frequently across a wide range.
+func (q *Deque) SetMinCapacity(minCapacityExp uint) {
+	if 1<<minCapacityExp > minCapacity {
+		q.minCap = 1 << minCapacityExp
+	} else {
+		q.minCap = minCapacity
 	}
 }
 
