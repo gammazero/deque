@@ -480,6 +480,30 @@ func TestRemoveOutOfRangePanics(t *testing.T) {
 	})
 }
 
+func TestSetMinCapacity(t *testing.T) {
+	var q Deque
+	exp := uint(8)
+	q.SetMinCapacity(exp)
+	q.PushBack("A")
+	if q.minCap != 1<<exp {
+		t.Fatal("wrong minimum capacity")
+	}
+	if len(q.buf) != 1<<exp {
+		t.Fatal("wrong buffer size")
+	}
+	q.PopBack()
+	if q.minCap != 1<<exp {
+		t.Fatal("wrong minimum capacity")
+	}
+	if len(q.buf) != 1<<exp {
+		t.Fatal("wrong buffer size")
+	}
+	q.SetMinCapacity(0)
+	if q.minCap != minCapacity {
+		t.Fatal("wrong minimum capacity")
+	}
+}
+
 func assertPanics(t *testing.T, name string, f func()) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -555,6 +579,31 @@ func BenchmarkRemove(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		remove(q, q.Len()/2)
+	}
+}
+
+func BenchmarkYoyo(b *testing.B) {
+	var q Deque
+	for i := 0; i < b.N; i++ {
+		for j := 0; j < 65536; j++ {
+			q.PushBack(j)
+		}
+		for j := 0; j < 65536; j++ {
+			q.PopFront()
+		}
+	}
+}
+
+func BenchmarkYoyoFixed(b *testing.B) {
+	var q Deque
+	q.SetMinCapacity(16)
+	for i := 0; i < b.N; i++ {
+		for j := 0; j < 65536; j++ {
+			q.PushBack(j)
+		}
+		for j := 0; j < 65536; j++ {
+			q.PopFront()
+		}
 	}
 }
 
