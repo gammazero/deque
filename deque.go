@@ -6,10 +6,22 @@ const minCapacity = 16
 
 // Deque represents a single instance of the deque data structure.
 type Deque struct {
-	buf   []interface{}
-	head  int
-	tail  int
-	count int
+	buf    []interface{}
+	head   int
+	tail   int
+	count  int
+	minCap int
+}
+
+// New creates a new Deque that has a minimum capacity of 2^minCapacityExp.  If
+// the value of the minimum capacity is less than or equal to the minimum
+// allowed, then New returns the same as new(Deque).
+func New(minCapacityExp uint) *Deque {
+	q := new(Deque)
+	if 1<<minCapacityExp > minCapacity {
+		q.minCap = 1 << minCapacityExp
+	}
+	return q
 }
 
 // Len returns the number of elements currently stored in the queue.
@@ -191,7 +203,10 @@ func (q *Deque) next(i int) int {
 // growIfFull resizes up if the buffer is full.
 func (q *Deque) growIfFull() {
 	if len(q.buf) == 0 {
-		q.buf = make([]interface{}, minCapacity)
+		if q.minCap == 0 {
+			q.minCap = minCapacity
+		}
+		q.buf = make([]interface{}, q.minCap)
 		return
 	}
 	if q.count == len(q.buf) {
@@ -201,7 +216,7 @@ func (q *Deque) growIfFull() {
 
 // shrinkIfExcess resize down if the buffer 1/4 full.
 func (q *Deque) shrinkIfExcess() {
-	if len(q.buf) > minCapacity && (q.count<<2) == len(q.buf) {
+	if len(q.buf) > q.minCap && (q.count<<2) == len(q.buf) {
 		q.resize()
 	}
 }
