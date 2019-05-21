@@ -6,7 +6,7 @@ go:
   - tip
 
 before_script:
-  - go -all vet ./...
+  - go vet ./...
 
 script:
   - ./go.test.sh
