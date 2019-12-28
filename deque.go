@@ -26,7 +26,7 @@ func (q *Deque) PushBack(elem interface{}) {
 
 	q.buf[q.tail] = elem
 	// Calculate new tail position.
-	q.tail = q.next(q.tail)
+	q.tail = q.next(q.tail, 1)
 	q.count++
 }
 
@@ -35,7 +35,7 @@ func (q *Deque) PushFront(elem interface{}) {
 	q.growIfFull()
 
 	// Calculate new head position.
-	q.head = q.prev(q.head)
+	q.head = q.prev(q.head, 1)
 	q.buf[q.head] = elem
 	q.count++
 }
@@ -50,7 +50,7 @@ func (q *Deque) PopFront() interface{} {
 	ret := q.buf[q.head]
 	q.buf[q.head] = nil
 	// Calculate new head position.
-	q.head = q.next(q.head)
+	q.head = q.next(q.head, 1)
 	q.count--
 
 	q.shrinkIfExcess()
@@ -64,9 +64,8 @@ func (q *Deque) PopBack() interface{} {
 	if q.count <= 0 {
 		panic("deque: PopBack() called on empty queue")
 	}
-
 	// Calculate new tail position
-	q.tail = q.prev(q.tail)
+	q.tail = q.prev(q.tail, 1)
 
 	// Remove value at tail.
 	ret := q.buf[q.tail]
@@ -94,7 +93,7 @@ func (q *Deque) Back() interface{} {
 	if q.count <= 0 {
 		panic("deque: Back() called when empty")
 	}
-	return q.buf[q.prev(q.tail)]
+	return q.buf[q.prev(q.tail, 1)]
 }
 
 // At returns the element at index i in the queue without removing the element
@@ -113,8 +112,7 @@ func (q *Deque) At(i int) interface{} {
 	if i < 0 || i >= q.count {
 		panic("deque: At() called with index out of range")
 	}
-	// bitwise modulus
-	return q.buf[(q.head+i)&(len(q.buf)-1)]
+	return q.buf[q.next(q.head, i)]
 }
 
 // Clear removes all elements from the queue, but retains the current capacity.
@@ -123,9 +121,7 @@ func (q *Deque) At(i int) interface{} {
 // only added.  Only when items are removed is the queue subject to getting
 // resized smaller.
 func (q *Deque) Clear() {
-	// bitwise modulus
-	modBits := len(q.buf) - 1
-	for h := q.head; h != q.tail; h = (h + 1) & modBits {
+	for h := q.head; h != q.tail; h = q.next(h, 1) {
 		q.buf[h] = nil
 	}
 	q.head = 0
@@ -146,12 +142,11 @@ func (q *Deque) Rotate(n int) {
 		return
 	}
 
-	modBits := len(q.buf) - 1
 	// If no empty space in buffer, only move head and tail indexes.
 	if q.head == q.tail {
 		// Calculate new head and tail using bitwise modulus.
-		q.head = (q.head + n) & modBits
-		q.tail = (q.tail + n) & modBits
+		q.head = q.next(q.head, n)
+		q.tail = q.next(q.tail, n)
 		return
 	}
 
@@ -159,8 +154,8 @@ func (q *Deque) Rotate(n int) {
 		// Rotate back to front.
 		for ; n < 0; n++ {
 			// Calculate new head and tail using bitwise modulus.
-			q.head = (q.head - 1) & modBits
-			q.tail = (q.tail - 1) & modBits
+			q.head = q.prev(q.head, 1)
+			q.tail = q.prev(q.tail, 1)
 			// Put tail value at head and remove value at tail.
 			q.buf[q.head] = q.buf[q.tail]
 			q.buf[q.tail] = nil
@@ -174,8 +169,8 @@ func (q *Deque) Rotate(n int) {
 		q.buf[q.tail] = q.buf[q.head]
 		q.buf[q.head] = nil
 		// Calculate new head and tail using bitwise modulus.
-		q.head = (q.head + 1) & modBits
-		q.tail = (q.tail + 1) & modBits
+		q.head = q.next(q.head, 1)
+		q.tail = q.next(q.tail, 1)
 	}
 }
 
@@ -194,14 +189,14 @@ func (q *Deque) SetMinCapacity(minCapacityExp uint) {
 	}
 }
 
-// prev returns the previous buffer position wrapping around buffer.
-func (q *Deque) prev(i int) int {
-	return (i - 1) & (len(q.buf) - 1) // bitwise modulus
+// prev returns the previous nth buffer position wrapping around buffer.
+func (q *Deque) prev(i, n int) int {
+	return (i - n) & (len(q.buf) - 1) // bitwise modulus
 }
 
-// next returns the next buffer position wrapping around buffer.
-func (q *Deque) next(i int) int {
-	return (i + 1) & (len(q.buf) - 1) // bitwise modulus
+// next returns the next nth buffer position wrapping around buffer.
+func (q *Deque) next(i, n int) int {
+	return (i + n) & (len(q.buf) - 1) // bitwise modulus
 }
 
 // growIfFull resizes up if the buffer is full.
