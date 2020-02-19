@@ -282,6 +282,44 @@ func TestAt(t *testing.T) {
 	}
 }
 
+func TestSet(t *testing.T) {
+	var q Deque
+
+	for i := 0; i < 1000; i++ {
+		q.PushBack(i)
+		q.Set(i, i+50)
+	}
+
+	// Front to back.
+	for j := 0; j < q.Len(); j++ {
+		if q.At(j).(int) != j+50 {
+			t.Errorf("index %d doesn't contain %d", j, j+50)
+		}
+	}
+}
+
+func TestCopy(t *testing.T) {
+	var q Deque
+
+	for i := 0; i < 1000; i++ {
+		q.PushBack(i)
+	}
+
+	// Copy first half in last half
+	for i := 0; i < 500; i++ {
+		q.Copy(i, i+500)
+	}
+
+	for j := 0; j < 500; j++ {
+		if q.At(j).(int) != j {
+			t.Errorf("index %d doesn't contain %d", j, j)
+		}
+		if q.At(j+500).(int) != j {
+			t.Errorf("index %d doesn't contain %d", j+500, j)
+		}
+	}
+}
+
 func TestClear(t *testing.T) {
 	var q Deque
 

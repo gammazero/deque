@@ -117,6 +117,29 @@ func (q *Deque) At(i int) interface{} {
 	return q.buf[(q.head+i)&(len(q.buf)-1)]
 }
 
+// Set puts the element at index i in the queue. Set shares the same purpose
+// than At() but perform the opposite operation. The index i is the same
+// index defined by At(). If the index is invalid, the call panics.
+func (q *Deque) Set(i int, elem interface{}) {
+	if i < 0 || i >= q.count {
+		panic("deque: Set() called with index out of range")
+	}
+	// bitwise modulus
+	q.buf[(q.head+i)&(len(q.buf)-1)] = elem
+}
+
+// Copy takes the indices of two elements and copies the element at index i
+// into index j. Copy is a shortcut for q.Set(j) = q.At(i). The indices i and j
+// are the same indices defined by At(). If one of the indices is invalid, the
+// call panics.
+func (q *Deque) Copy(i int, j int) {
+	if i < 0 || i >= q.count || j < 0 || j >= q.count {
+		panic("deque: Copy() called with index out of range")
+	}
+	// bitwise modulus
+	q.buf[(q.head+j)&(len(q.buf)-1)] = q.buf[(q.head+i)&(len(q.buf)-1)]
+}
+
 // Clear removes all elements from the queue, but retains the current capacity.
 // This is useful when repeatedly reusing the queue at high frequency to avoid
 // GC during reuse.  The queue will not be resized smaller as long as items are
