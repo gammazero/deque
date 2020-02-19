@@ -482,6 +482,46 @@ func TestAtOutOfRangePanics(t *testing.T) {
 	})
 }
 
+func TestSetOutOfRangePanics(t *testing.T) {
+	var q Deque
+
+	q.PushBack(1)
+	q.PushBack(2)
+	q.PushBack(3)
+
+	assertPanics(t, "should panic when negative index", func() {
+		q.Set(-4, 1)
+	})
+
+	assertPanics(t, "should panic when index greater than length", func() {
+		q.Set(4, 1)
+	})
+}
+
+func TestCopyOutOfRangePanics(t *testing.T) {
+	var q Deque
+
+	q.PushBack(1)
+	q.PushBack(2)
+	q.PushBack(3)
+
+	assertPanics(t, "should panic when negative index", func() {
+		q.Copy(-4, 1)
+	})
+
+	assertPanics(t, "should panic when index greater than length", func() {
+		q.Copy(4, 1)
+	})
+
+	assertPanics(t, "should panic when negative index", func() {
+		q.Copy(1, -4)
+	})
+
+	assertPanics(t, "should panic when index greater than length", func() {
+		q.Copy(1, 4)
+	})
+}
+
 func TestInsertOutOfRangePanics(t *testing.T) {
 	q := new(Deque)
 
