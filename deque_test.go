@@ -282,6 +282,22 @@ func TestAt(t *testing.T) {
 	}
 }
 
+func TestSet(t *testing.T) {
+	var q Deque
+
+	for i := 0; i < 1000; i++ {
+		q.PushBack(i)
+		q.Set(i, i+50)
+	}
+
+	// Front to back.
+	for j := 0; j < q.Len(); j++ {
+		if q.At(j).(int) != j+50 {
+			t.Errorf("index %d doesn't contain %d", j, j+50)
+		}
+	}
+}
+
 func TestClear(t *testing.T) {
 	var q Deque
 
@@ -441,6 +457,22 @@ func TestAtOutOfRangePanics(t *testing.T) {
 
 	assertPanics(t, "should panic when index greater than length", func() {
 		q.At(4)
+	})
+}
+
+func TestSetOutOfRangePanics(t *testing.T) {
+	var q Deque
+
+	q.PushBack(1)
+	q.PushBack(2)
+	q.PushBack(3)
+
+	assertPanics(t, "should panic when negative index", func() {
+		q.Set(-4, 1)
+	})
+
+	assertPanics(t, "should panic when index greater than length", func() {
+		q.Set(4, 1)
 	})
 }
 
