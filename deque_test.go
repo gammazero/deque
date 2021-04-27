@@ -201,6 +201,35 @@ func TestBack(t *testing.T) {
 	}
 }
 
+func TestNew(t *testing.T) {
+	minCap := 64
+	q := New(0, minCap)
+	if q.Cap() != 0 {
+		t.Fatal("should not have allowcated mem yet")
+	}
+	q.PushBack("foo")
+	q.PopFront()
+	if q.Len() != 0 {
+		t.Fatal("Len() should return 0")
+	}
+	if q.Cap() != minCap {
+		t.Fatalf("worng capactiy expected %d, got %d", minCap, q.Cap())
+	}
+
+	curCap := 128
+	q = New(curCap, minCap)
+	if q.Cap() != curCap {
+		t.Fatalf("Cap() should return %d, got %d", curCap, q.Cap())
+	}
+	if q.Len() != 0 {
+		t.Fatalf("Len() should return 0")
+	}
+	q.PushBack("foo")
+	if q.Cap() != curCap {
+		t.Fatalf("Cap() should return %d, got %d", curCap, q.Cap())
+	}
+}
+
 func checkRotate(t *testing.T, size int) {
 	var q Deque
 	for i := 0; i < size; i++ {

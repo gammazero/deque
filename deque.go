@@ -13,6 +13,52 @@ type Deque struct {
 	minCap int
 }
 
+// New creates a new Deque, optionally setting the current and minimum capacity
+// when non-zero values are given for these.
+//
+// To create a Deque with capacity to store 2048 items without resizing, and
+// that will not resize below space for 32 items when removing itmes:
+//   d := deque.New(2048, 32)
+//
+// To create a Deque that has not yet allocated memory, but after it does will
+// never resize to have space for less than 64 items:
+//   d := deque.New(0, 64)
+//
+// Note that any values supplied here are rounded up to the nearest power of 2.
+func New(size ...int) *Deque {
+	var capacity, minimum int
+	if len(size) >= 1 {
+		capacity = size[0]
+		if len(size) >= 2 {
+			minimum = size[1]
+		}
+	}
+
+	minCap := minCapacity
+	for minCap < minimum {
+		minCap <<= 1
+	}
+
+	var buf []interface{}
+	if capacity != 0 {
+		bufSize := minCap
+		for bufSize < capacity {
+			bufSize <<= 1
+		}
+		buf = make([]interface{}, bufSize)
+	}
+
+	return &Deque{
+		buf:    buf,
+		minCap: minCap,
+	}
+}
+
+// Cap returns the current capacity of the Deque.
+func (q *Deque) Cap() int {
+	return len(q.buf)
+}
+
 // Len returns the number of elements currently stored in the queue.
 func (q *Deque) Len() int {
 	return q.count
@@ -217,6 +263,9 @@ func (q *Deque) next(i int) int {
 
 // growIfFull resizes up if the buffer is full.
 func (q *Deque) growIfFull() {
+	if q.count != len(q.buf) {
+		return
+	}
 	if len(q.buf) == 0 {
 		if q.minCap == 0 {
 			q.minCap = minCapacity
@@ -224,9 +273,7 @@ func (q *Deque) growIfFull() {
 		q.buf = make([]interface{}, q.minCap)
 		return
 	}
-	if q.count == len(q.buf) {
-		q.resize()
-	}
+	q.resize()
 }
 
 // shrinkIfExcess resize down if the buffer 1/4 full.
