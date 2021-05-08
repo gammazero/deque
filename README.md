@@ -1,13 +1,12 @@
 # deque
 
-[![Build Status](https://travis-ci.com/gammazero/deque.svg)](https://travis-ci.com/gammazero/deque)
+[![GoDoc](https://godoc.org/github.com/gammazero/deque?status.svg)](https://godoc.org/github.com/gammazero/deque)
+[![GoDoc](https://pkg.go.dev/badge/github.com/gammazero/deque)](https://pkg.go.dev/github.com/gammazero/deque)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gammazero/deque)](https://goreportcard.com/report/github.com/gammazero/deque)
 [![codecov](https://codecov.io/gh/gammazero/deque/branch/master/graph/badge.svg)](https://codecov.io/gh/gammazero/deque)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Fast ring-buffer deque ([double-ended queue](https://en.wikipedia.org/wiki/Double-ended_queue)) implementation.
-
-[![GoDoc](https://godoc.org/github.com/gammazero/deque?status.svg)](https://godoc.org/github.com/gammazero/deque)
 
 For a pictorial description, see the [Deque diagram](https://github.com/gammazero/deque/wiki)
 
