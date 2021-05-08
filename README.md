@@ -1,7 +1,7 @@
 # deque
 
-[![GoDoc](https://godoc.org/github.com/gammazero/deque?status.svg)](https://godoc.org/github.com/gammazero/deque)
 [![GoDoc](https://pkg.go.dev/badge/github.com/gammazero/deque)](https://pkg.go.dev/github.com/gammazero/deque)
+[![Build Status](https://github.com/gammazero/deque/actions/workflows/go.yml/badge.svg)](https://github.com/gammazero/deque/actions/workflows/go.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gammazero/deque)](https://goreportcard.com/report/github.com/gammazero/deque)
 [![codecov](https://codecov.io/gh/gammazero/deque/branch/master/graph/badge.svg)](https://codecov.io/gh/gammazero/deque)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
