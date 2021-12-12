@@ -17,7 +17,7 @@ type Deque struct {
 // when non-zero values are given for these.
 //
 // To create a Deque with capacity to store 2048 items without resizing, and
-// that will not resize below space for 32 items when removing itmes:
+// that will not resize below space for 32 items when removing items:
 //   d := deque.New(2048, 32)
 //
 // To create a Deque that has not yet allocated memory, but after it does will
