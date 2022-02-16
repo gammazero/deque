@@ -56,11 +56,17 @@ func New(size ...int) *Deque {
 
 // Cap returns the current capacity of the Deque.
 func (q *Deque) Cap() int {
+	if q == nil {
+		return 0
+	}
 	return len(q.buf)
 }
 
 // Len returns the number of elements currently stored in the queue.
 func (q *Deque) Len() int {
+	if q == nil {
+		return 0
+	}
 	return q.count
 }
 
@@ -194,7 +200,7 @@ func (q *Deque) Clear() {
 // back-to-front.  Having Deque provide Rotate() avoids resizing that could
 // happen if implementing rotation using only Pop and Push methods.
 func (q *Deque) Rotate(n int) {
-	if q.count <= 1 {
+	if q.Len() <= 1 {
 		return
 	}
 	// Rotating a multiple of q.count is same as no rotation.
