@@ -9,6 +9,16 @@ func TestEmpty(t *testing.T) {
 	}
 }
 
+func TestNil(t *testing.T) {
+	var q *Deque
+	if q.Len() != 0 {
+		t.Error("expected q.Len() == 0")
+	}
+	if q.Cap() != 0 {
+		t.Error("expected q.Cap() == 0")
+	}
+}
+
 func TestFrontBack(t *testing.T) {
 	var q Deque
 	q.PushBack("foo")
@@ -108,6 +118,13 @@ func TestSimple(t *testing.T) {
 	for i := 0; i < minCapacity; i++ {
 		q.PushBack(i)
 	}
+	if q.Front() != 0 {
+		t.Fatalf("expected 0 at front, got %d", q.Front().(int))
+	}
+	if q.Back() != minCapacity-1 {
+		t.Fatalf("expected %d at back, got %d", minCapacity-1, q.Back().(int))
+	}
+
 	for i := 0; i < minCapacity; i++ {
 		if q.Front() != i {
 			t.Error("peek", i, "had value", q.Front())
