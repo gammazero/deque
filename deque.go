@@ -242,8 +242,8 @@ func (q *Deque) Rotate(n int) {
 	}
 }
 
-// IndexFunc returns the index into the Deque of the first item satisfying
-// f(item), or -1 if none do.
+// Index returns the index into the Deque of the first item satisfying f(item),
+// or -1 if none do.
 func (q *Deque) Index(f func(interface{}) bool) int {
 	if q.Len() > 0 {
 		modBits := len(q.buf) - 1
@@ -259,9 +259,9 @@ func (q *Deque) Index(f func(interface{}) bool) int {
 // Insert is used to insert an element into the middle of the queue, before the
 // element at the specified index.  Insert(0,e) is the same as PushFront(e) and
 // Insert(Len(),e) is the same as PushBack(e).  Complexity is constant plus
-// linear in the lesser of the distances between `at` and either of the ends of
-// the queue.  Accepts only non-negative index values, and panics if index is
-// out of range.
+// linear in the lesser of the distances between the index and either of the
+// ends of the queue.  Accepts only non-negative index values, and panics if
+// index is out of range.
 func (q *Deque) Insert(at int, item interface{}) {
 	if at < 0 || at > q.count {
 		panic("deque: Insert() called with index out of range")
@@ -289,8 +289,8 @@ func (q *Deque) Insert(at int, item interface{}) {
 // Remove removes and returns an element from the middle of the queue, at the
 // specified index.  Remove(0) is the same as PopFront() and Remove(Len()-1) is
 // the same as PopBack().  Complexity is constant plus linear in the lesser of
-// the distances between i and either of the ends of the queue.  Accepts only
-// non-negative index values, and panics if index is out of range.
+// the distances between the index and either of the ends of the queue.
+// Accepts only non-negative index values, and panics if index is out of range.
 func (q *Deque) Remove(at int) interface{} {
 	if at < 0 || at >= q.Len() {
 		panic("deque: Remove() called with index out of range")
