@@ -11,6 +11,15 @@ func TestEmpty(t *testing.T) {
 	if q.Len() != 0 {
 		t.Error("q.Len() =", q.Len(), "expect 0")
 	}
+	if q.Cap() != 0 {
+		t.Error("expected q.Cap() == 0")
+	}
+	idx := q.Index(func(item interface{}) bool {
+		return true
+	})
+	if idx != -1 {
+		t.Error("should return -1 index for nil deque")
+	}
 }
 
 func TestNil(t *testing.T) {
@@ -20,6 +29,13 @@ func TestNil(t *testing.T) {
 	}
 	if q.Cap() != 0 {
 		t.Error("expected q.Cap() == 0")
+	}
+	q.Rotate(5)
+	idx := q.Index(func(item interface{}) bool {
+		return true
+	})
+	if idx != -1 {
+		t.Error("should return -1 index for nil deque")
 	}
 }
 
