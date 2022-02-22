@@ -54,7 +54,7 @@ func New(size ...int) *Deque {
 	}
 }
 
-// Cap returns the current capacity of the Deque.
+// Cap returns the current capacity of the Deque. If q is nil, q.Cap() is zero.
 func (q *Deque) Cap() int {
 	if q == nil {
 		return 0
@@ -62,7 +62,8 @@ func (q *Deque) Cap() int {
 	return len(q.buf)
 }
 
-// Len returns the number of elements currently stored in the queue.
+// Len returns the number of elements currently stored in the queue.  If q is
+// nil, q.Len() is zero.
 func (q *Deque) Len() int {
 	if q == nil {
 		return 0
@@ -70,7 +71,7 @@ func (q *Deque) Len() int {
 	return q.count
 }
 
-// PushBack appends an element to the back of the queue.  Implements FIFO when
+// PushBack appends an element to the back of the queue. Implements FIFO when
 // elements are removed with PopFront(), and LIFO when elements are removed
 // with PopBack().
 func (q *Deque) PushBack(elem interface{}) {
@@ -198,7 +199,8 @@ func (q *Deque) Clear() {
 
 // Rotate rotates the deque n steps front-to-back.  If n is negative, rotates
 // back-to-front.  Having Deque provide Rotate() avoids resizing that could
-// happen if implementing rotation using only Pop and Push methods.
+// happen if implementing rotation using only Pop and Push methods.  If q.Len()
+// is one or less, or q is nil, then Rotate does nothing.
 func (q *Deque) Rotate(n int) {
 	if q.Len() <= 1 {
 		return
@@ -214,7 +216,7 @@ func (q *Deque) Rotate(n int) {
 	if q.head == q.tail {
 		// Calculate new head and tail using bitwise modulus.
 		q.head = (q.head + n) & modBits
-		q.tail = (q.tail + n) & modBits
+		q.tail = q.head
 		return
 	}
 
@@ -240,6 +242,86 @@ func (q *Deque) Rotate(n int) {
 		q.head = (q.head + 1) & modBits
 		q.tail = (q.tail + 1) & modBits
 	}
+}
+
+// Index returns the index into the Deque of the first item satisfying f(item),
+// or -1 if none do.  If q is nil, then -1 is always returned.  Search is
+// linear starting with index 0.
+func (q *Deque) Index(f func(interface{}) bool) int {
+	if q.Len() > 0 {
+		modBits := len(q.buf) - 1
+		for i := 0; i < q.count; i++ {
+			if f(q.buf[(q.head+i)&modBits]) {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
+// Insert is used to insert an element into the middle of the queue, before the
+// element at the specified index.  Insert(0,e) is the same as PushFront(e) and
+// Insert(Len(),e) is the same as PushBack(e).  Accepts only non-negative index
+// values, and panics if index is out of range.
+//
+// Important: Deque is optimized for O(1) operations at the ends of the queue,
+// not for operations in the the middle.  Complexity of this function is
+// constant plus linear in the lesser of the distances between the index and
+// either of the ends of the queue.
+func (q *Deque) Insert(at int, item interface{}) {
+	if at < 0 || at > q.count {
+		panic("deque: Insert() called with index out of range")
+	}
+	if at*2 < q.count {
+		q.PushFront(item)
+		front := q.head
+		for i := 0; i < at; i++ {
+			next := q.next(front)
+			q.buf[front], q.buf[next] = q.buf[next], q.buf[front]
+			front = next
+		}
+		return
+	}
+	swaps := q.count - at
+	q.PushBack(item)
+	back := q.prev(q.tail)
+	for i := 0; i < swaps; i++ {
+		prev := q.prev(back)
+		q.buf[back], q.buf[prev] = q.buf[prev], q.buf[back]
+		back = prev
+	}
+}
+
+// Remove removes and returns an element from the middle of the queue, at the
+// specified index.  Remove(0) is the same as PopFront() and Remove(Len()-1) is
+// the same as PopBack().  Accepts only non-negative index values, and panics
+// if index is out of range.
+//
+// Important: Deque is optimized for O(1) operations at the ends of the queue,
+// not for operations in the the middle.  Complexity of this function is
+// constant plus linear in the lesser of the distances between the index and
+// either of the ends of the queue.
+func (q *Deque) Remove(at int) interface{} {
+	if at < 0 || at >= q.Len() {
+		panic("deque: Remove() called with index out of range")
+	}
+
+	rm := (q.head + at) & (len(q.buf) - 1)
+	if at*2 < q.count {
+		for i := 0; i < at; i++ {
+			prev := q.prev(rm)
+			q.buf[prev], q.buf[rm] = q.buf[rm], q.buf[prev]
+			rm = prev
+		}
+		return q.PopFront()
+	}
+	swaps := q.count - at - 1
+	for i := 0; i < swaps; i++ {
+		next := q.next(rm)
+		q.buf[rm], q.buf[next] = q.buf[next], q.buf[rm]
+		rm = next
+	}
+	return q.PopBack()
 }
 
 // SetMinCapacity sets a minimum capacity of 2^minCapacityExp.  If the value of
