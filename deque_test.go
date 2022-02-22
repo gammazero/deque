@@ -1,11 +1,24 @@
 package deque
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+	"unicode"
+)
 
 func TestEmpty(t *testing.T) {
 	var q Deque
 	if q.Len() != 0 {
 		t.Error("q.Len() =", q.Len(), "expect 0")
+	}
+	if q.Cap() != 0 {
+		t.Error("expected q.Cap() == 0")
+	}
+	idx := q.Index(func(item interface{}) bool {
+		return true
+	})
+	if idx != -1 {
+		t.Error("should return -1 index for nil deque")
 	}
 }
 
@@ -16,6 +29,13 @@ func TestNil(t *testing.T) {
 	}
 	if q.Cap() != 0 {
 		t.Error("expected q.Cap() == 0")
+	}
+	q.Rotate(5)
+	idx := q.Index(func(item interface{}) bool {
+		return true
+	})
+	if idx != -1 {
+		t.Error("should return -1 index for nil deque")
 	}
 }
 
@@ -371,17 +391,44 @@ func TestClear(t *testing.T) {
 	}
 }
 
+func TestIndex(t *testing.T) {
+	var q Deque
+	for _, x := range "Hello, 世界" {
+		q.PushBack(x)
+	}
+	idx := q.Index(func(item interface{}) bool {
+		c := item.(rune)
+		return unicode.Is(unicode.Han, c)
+	})
+	if idx != 7 {
+		t.Fatal("Expected index 7, got", idx)
+	}
+	idx = q.Index(func(item interface{}) bool {
+		c := item.(rune)
+		return c == 'H'
+	})
+	if idx != 0 {
+		t.Fatal("Expected index 7, got", idx)
+	}
+	idx = q.Index(func(item interface{}) bool {
+		return false
+	})
+	if idx != -1 {
+		t.Fatal("Expected index -1, got", idx)
+	}
+}
+
 func TestInsert(t *testing.T) {
 	q := new(Deque)
 	for _, x := range "ABCDEFG" {
 		q.PushBack(x)
 	}
-	insert(q, 4, 'x') // ABCDxEFG
+	q.Insert(4, 'x') // ABCDxEFG
 	if q.At(4) != 'x' {
-		t.Error("expected x at position 4")
+		t.Error("expected x at position 4, got", q.At(4))
 	}
 
-	insert(q, 2, 'y') // AByCDxEFG
+	q.Insert(2, 'y') // AByCDxEFG
 	if q.At(2) != 'y' {
 		t.Error("expected y at position 2")
 	}
@@ -389,14 +436,77 @@ func TestInsert(t *testing.T) {
 		t.Error("expected x at position 5")
 	}
 
-	insert(q, 0, 'b') // bAByCDxEFG
+	q.Insert(0, 'b') // bAByCDxEFG
 	if q.Front() != 'b' {
-		t.Error("expected b inserted at front")
+		t.Error("expected b inserted at front, got", q.Front())
 	}
 
-	insert(q, q.Len(), 'e') // bAByCDxEFGe
+	q.Insert(q.Len(), 'e') // bAByCDxEFGe
 
 	for i, x := range "bAByCDxEFGe" {
+		if q.PopFront() != x {
+			t.Error("expected", x, "at position", i)
+		}
+	}
+
+	q = New(16)
+
+	for i := 0; i < q.Cap(); i++ {
+		q.PushBack(fmt.Sprint(i))
+	}
+	// deque: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+	// buffer: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+	for i := 0; i < q.Cap()/2; i++ {
+		q.PopFront()
+	}
+	// deque: 8 9 10 11 12 13 14 15
+	// buffer: [_,_,_,_,_,_,_,_,8,9,10,11,12,13,14,15]
+	for i := 0; i < q.Cap()/4; i++ {
+		q.PushBack(fmt.Sprint(q.Cap() + i))
+	}
+	// deque: 8 9 10 11 12 13 14 15 16 17 18 19
+	// buffer: [16,17,18,19,_,_,_,_,8,9,10,11,12,13,14,15]
+
+	at := q.Len() - 2
+	q.Insert(at, "x")
+	// deque: 8 9 10 11 12 13 14 15 16 17 x 18 19
+	// buffer: [16,17,x,18,19,_,_,_,8,9,10,11,12,13,14,15]
+	if q.At(at) != "x" {
+		t.Error("expected x at position", at)
+	}
+	if q.At(at) != "x" {
+		t.Error("expected x at position", at)
+	}
+
+	q.Insert(2, "y")
+	// deque: 8 9 y 10 11 12 13 14 15 16 17 x 18 19
+	// buffer: [16,17,x,18,19,_,_,8,9,y,10,11,12,13,14,15]
+	if q.At(2) != "y" {
+		t.Error("expected y at position 2")
+	}
+	if q.At(at+1) != "x" {
+		t.Error("expected x at position 5")
+	}
+
+	q.Insert(0, "b")
+	// deque: b 8 9 y 10 11 12 13 14 15 16 17 x 18 19
+	// buffer: [16,17,x,18,19,_,b,8,9,y,10,11,12,13,14,15]
+	if q.Front() != "b" {
+		t.Error("expected b inserted at front, got", q.Front())
+	}
+
+	q.Insert(q.Len(), "e")
+	if q.Cap() != q.Len() {
+		t.Fatal("Expected full buffer")
+	}
+	// deque: b 8 9 y 10 11 12 13 14 15 16 17 x 18 19 e
+	// buffer: [16,17,x,18,19,e,b,8,9,y,10,11,12,13,14,15]
+	for i, x := range []string{"16", "17", "x", "18", "19", "e", "b", "8", "9", "y", "10", "11", "12", "13", "14", "15"} {
+		if q.buf[i] != x {
+			t.Error("expected", x, "at buffer position", i)
+		}
+	}
+	for i, x := range []string{"b", "8", "9", "y", "10", "11", "12", "13", "14", "15", "16", "17", "x", "18", "19", "e"} {
 		if q.PopFront() != x {
 			t.Error("expected", x, "at position", i)
 		}
@@ -409,25 +519,25 @@ func TestRemove(t *testing.T) {
 		q.PushBack(x)
 	}
 
-	if remove(q, 4) != 'E' { // ABCDFG
+	if q.Remove(4) != 'E' { // ABCDFG
 		t.Error("expected E from position 4")
 	}
 
-	if remove(q, 2) != 'C' { // ABDFG
+	if q.Remove(2) != 'C' { // ABDFG
 		t.Error("expected C at position 2")
 	}
 	if q.Back() != 'G' {
 		t.Error("expected G at back")
 	}
 
-	if remove(q, 0) != 'A' { // BDFG
+	if q.Remove(0) != 'A' { // BDFG
 		t.Error("expected to remove A from front")
 	}
 	if q.Front() != 'B' {
 		t.Error("expected G at back")
 	}
 
-	if remove(q, q.Len()-1) != 'G' { // BDF
+	if q.Remove(q.Len()-1) != 'G' { // BDF
 		t.Error("expected to remove G from back")
 	}
 	if q.Back() != 'F' {
@@ -526,17 +636,17 @@ func TestInsertOutOfRangePanics(t *testing.T) {
 	q := new(Deque)
 
 	assertPanics(t, "should panic when inserting out of range", func() {
-		insert(q, 1, "X")
+		q.Insert(1, "X")
 	})
 
 	q.PushBack("A")
 
 	assertPanics(t, "should panic when inserting at negative index", func() {
-		insert(q, -1, "Y")
+		q.Insert(-1, "Y")
 	})
 
 	assertPanics(t, "should panic when inserting out of range", func() {
-		insert(q, 2, "B")
+		q.Insert(2, "B")
 	})
 }
 
@@ -544,17 +654,17 @@ func TestRemoveOutOfRangePanics(t *testing.T) {
 	q := new(Deque)
 
 	assertPanics(t, "should panic when removing from empty queue", func() {
-		remove(q, 0)
+		q.Remove(0)
 	})
 
 	q.PushBack("A")
 
 	assertPanics(t, "should panic when removing at negative index", func() {
-		remove(q, -1)
+		q.Remove(-1)
 	})
 
 	assertPanics(t, "should panic when removing out of range", func() {
-		remove(q, 1)
+		q.Remove(1)
 	})
 }
 
@@ -645,7 +755,7 @@ func BenchmarkInsert(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		insert(q, q.Len()/2, -i)
+		q.Insert(q.Len()/2, -i)
 	}
 }
 
@@ -656,7 +766,7 @@ func BenchmarkRemove(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		remove(q, q.Len()/2)
+		q.Remove(q.Len() / 2)
 	}
 }
 
@@ -683,62 +793,4 @@ func BenchmarkYoyoFixed(b *testing.B) {
 			q.PopFront()
 		}
 	}
-}
-
-// insert is used to insert an element into the middle of the queue, before the
-// element at the specified index.  insert(0,e) is the same as PushFront(e) and
-// insert(Len(),e) is the same as PushBack(e).  Complexity is constant plus
-// linear in the lesser of the distances between i and either of the ends of
-// the queue.  Accepts only non-negative index values, and panics if index is
-// out of range.
-func insert(q *Deque, i int, elem interface{}) {
-	if i < 0 || i > q.Len() {
-		panic("deque: Insert() called with index out of range")
-	}
-	if i == 0 {
-		q.PushFront(elem)
-		return
-	}
-	if i == q.Len() {
-		q.PushBack(elem)
-		return
-	}
-	if i <= q.Len()/2 {
-		q.Rotate(i)
-		q.PushFront(elem)
-		q.Rotate(-i)
-	} else {
-		rots := q.Len() - i
-		q.Rotate(-rots)
-		q.PushBack(elem)
-		q.Rotate(rots)
-	}
-}
-
-// remove removes and returns an element from the middle of the queue, at the
-// specified index.  remove(0) is the same as PopFront() and remove(Len()-1) is
-// the same as PopBack().  Complexity is constant plus linear in the lesser of
-// the distances between i and either of the ends of the queue.  Accepts only
-// non-negative index values, and panics if index is out of range.
-func remove(q *Deque, i int) interface{} {
-	if i < 0 || i >= q.Len() {
-		panic("deque: Remove() called with index out of range")
-	}
-	if i == 0 {
-		return q.PopFront()
-	}
-	if i == q.Len()-1 {
-		return q.PopBack()
-	}
-	if i <= q.Len()/2 {
-		q.Rotate(i)
-		elem := q.PopFront()
-		q.Rotate(-i)
-		return elem
-	}
-	rots := q.Len() - 1 - i
-	q.Rotate(-rots)
-	elem := q.PopBack()
-	q.Rotate(rots)
-	return elem
 }
