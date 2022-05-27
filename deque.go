@@ -1,7 +1,7 @@
 package deque
 
-// minCapacity is the smallest capacity that deque may have.
-// Must be power of 2 for bitwise modulus: x % n == x & (n - 1).
+// minCapacity is the smallest capacity that deque may have. Must be power of 2
+// for bitwise modulus: x % n == x & (n - 1).
 const minCapacity = 16
 
 // Deque represents a single instance of the deque data structure.
@@ -62,7 +62,7 @@ func (q *Deque) Cap() int {
 	return len(q.buf)
 }
 
-// Len returns the number of elements currently stored in the queue.  If q is
+// Len returns the number of elements currently stored in the queue. If q is
 // nil, q.Len() is zero.
 func (q *Deque) Len() int {
 	if q == nil {
@@ -94,7 +94,7 @@ func (q *Deque) PushFront(elem interface{}) {
 }
 
 // PopFront removes and returns the element from the front of the queue.
-// Implements FIFO when used with PushBack().  If the queue is empty, the call
+// Implements FIFO when used with PushBack(). If the queue is empty, the call
 // panics.
 func (q *Deque) PopFront() interface{} {
 	if q.count <= 0 {
@@ -111,7 +111,7 @@ func (q *Deque) PopFront() interface{} {
 }
 
 // PopBack removes and returns the element from the back of the queue.
-// Implements LIFO when used with PushBack().  If the queue is empty, the call
+// Implements LIFO when used with PushBack(). If the queue is empty, the call
 // panics.
 func (q *Deque) PopBack() interface{} {
 	if q.count <= 0 {
@@ -130,8 +130,8 @@ func (q *Deque) PopBack() interface{} {
 	return ret
 }
 
-// Front returns the element at the front of the queue.  This is the element
-// that would be returned by PopFront().  This call panics if the queue is
+// Front returns the element at the front of the queue. This is the element
+// that would be returned by PopFront(). This call panics if the queue is
 // empty.
 func (q *Deque) Front() interface{} {
 	if q.count <= 0 {
@@ -140,9 +140,8 @@ func (q *Deque) Front() interface{} {
 	return q.buf[q.head]
 }
 
-// Back returns the element at the back of the queue.  This is the element
-// that would be returned by PopBack().  This call panics if the queue is
-// empty.
+// Back returns the element at the back of the queue. This is the element that
+// would be returned by PopBack(). This call panics if the queue is empty.
 func (q *Deque) Back() interface{} {
 	if q.count <= 0 {
 		panic("deque: Back() called when empty")
@@ -151,16 +150,16 @@ func (q *Deque) Back() interface{} {
 }
 
 // At returns the element at index i in the queue without removing the element
-// from the queue.  This method accepts only non-negative index values.  At(0)
-// refers to the first element and is the same as Front().  At(Len()-1) refers
-// to the last element and is the same as Back().  If the index is invalid, the
+// from the queue. This method accepts only non-negative index values. At(0)
+// refers to the first element and is the same as Front(). At(Len()-1) refers
+// to the last element and is the same as Back(). If the index is invalid, the
 // call panics.
 //
 // The purpose of At is to allow Deque to serve as a more general purpose
 // circular buffer, where items are only added to and removed from the ends of
-// the deque, but may be read from any place within the deque.  Consider the
+// the deque, but may be read from any place within the deque. Consider the
 // case of a fixed-size circular log buffer: A new entry is pushed onto one end
-// and when full the oldest is popped from the other end.  All the log entries
+// and when full the oldest is popped from the other end. All the log entries
 // in the buffer must be readable without altering the buffer contents.
 func (q *Deque) At(i int) interface{} {
 	if i < 0 || i >= q.count {
@@ -171,8 +170,8 @@ func (q *Deque) At(i int) interface{} {
 }
 
 // Set puts the element at index i in the queue. Set shares the same purpose
-// than At() but perform the opposite operation. The index i is the same
-// index defined by At(). If the index is invalid, the call panics.
+// than At() but perform the opposite operation. The index i is the same index
+// defined by At(). If the index is invalid, the call panics.
 func (q *Deque) Set(i int, elem interface{}) {
 	if i < 0 || i >= q.count {
 		panic("deque: Set() called with index out of range")
@@ -183,8 +182,8 @@ func (q *Deque) Set(i int, elem interface{}) {
 
 // Clear removes all elements from the queue, but retains the current capacity.
 // This is useful when repeatedly reusing the queue at high frequency to avoid
-// GC during reuse.  The queue will not be resized smaller as long as items are
-// only added.  Only when items are removed is the queue subject to getting
+// GC during reuse. The queue will not be resized smaller as long as items are
+// only added. Only when items are removed is the queue subject to getting
 // resized smaller.
 func (q *Deque) Clear() {
 	// bitwise modulus
@@ -197,9 +196,9 @@ func (q *Deque) Clear() {
 	q.count = 0
 }
 
-// Rotate rotates the deque n steps front-to-back.  If n is negative, rotates
-// back-to-front.  Having Deque provide Rotate() avoids resizing that could
-// happen if implementing rotation using only Pop and Push methods.  If q.Len()
+// Rotate rotates the deque n steps front-to-back. If n is negative, rotates
+// back-to-front. Having Deque provide Rotate() avoids resizing that could
+// happen if implementing rotation using only Pop and Push methods. If q.Len()
 // is one or less, or q is nil, then Rotate does nothing.
 func (q *Deque) Rotate(n int) {
 	if q.Len() <= 1 {
@@ -245,8 +244,8 @@ func (q *Deque) Rotate(n int) {
 }
 
 // Index returns the index into the Deque of the first item satisfying f(item),
-// or -1 if none do.  If q is nil, then -1 is always returned.  Search is
-// linear starting with index 0.
+// or -1 if none do. If q is nil, then -1 is always returned. Search is linear
+// starting with index 0.
 func (q *Deque) Index(f func(interface{}) bool) int {
 	if q.Len() > 0 {
 		modBits := len(q.buf) - 1
@@ -259,13 +258,28 @@ func (q *Deque) Index(f func(interface{}) bool) int {
 	return -1
 }
 
+// RIndex is the same as Index, but searches from Back to Front. The index
+// returned is from Front to Back, where index 0 is the index of the item
+// returned by Front().
+func (q *Deque) RIndex(f func(interface{}) bool) int {
+	if q.Len() > 0 {
+		modBits := len(q.buf) - 1
+		for i := q.count - 1; i >= 0; i-- {
+			if f(q.buf[(q.head+i)&modBits]) {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
 // Insert is used to insert an element into the middle of the queue, before the
-// element at the specified index.  Insert(0,e) is the same as PushFront(e) and
-// Insert(Len(),e) is the same as PushBack(e).  Accepts only non-negative index
+// element at the specified index. Insert(0,e) is the same as PushFront(e) and
+// Insert(Len(),e) is the same as PushBack(e). Accepts only non-negative index
 // values, and panics if index is out of range.
 //
 // Important: Deque is optimized for O(1) operations at the ends of the queue,
-// not for operations in the the middle.  Complexity of this function is
+// not for operations in the the middle. Complexity of this function is
 // constant plus linear in the lesser of the distances between the index and
 // either of the ends of the queue.
 func (q *Deque) Insert(at int, item interface{}) {
@@ -293,12 +307,12 @@ func (q *Deque) Insert(at int, item interface{}) {
 }
 
 // Remove removes and returns an element from the middle of the queue, at the
-// specified index.  Remove(0) is the same as PopFront() and Remove(Len()-1) is
-// the same as PopBack().  Accepts only non-negative index values, and panics
-// if index is out of range.
+// specified index. Remove(0) is the same as PopFront() and Remove(Len()-1) is
+// the same as PopBack(). Accepts only non-negative index values, and panics if
+// index is out of range.
 //
 // Important: Deque is optimized for O(1) operations at the ends of the queue,
-// not for operations in the the middle.  Complexity of this function is
+// not for operations in the the middle. Complexity of this function is
 // constant plus linear in the lesser of the distances between the index and
 // either of the ends of the queue.
 func (q *Deque) Remove(at int) interface{} {
@@ -324,10 +338,10 @@ func (q *Deque) Remove(at int) interface{} {
 	return q.PopBack()
 }
 
-// SetMinCapacity sets a minimum capacity of 2^minCapacityExp.  If the value of
+// SetMinCapacity sets a minimum capacity of 2^minCapacityExp. If the value of
 // the minimum capacity is less than or equal to the minimum allowed, then
-// capacity is set to the minimum allowed.  This may be called at anytime to
-// set a new minimum capacity.
+// capacity is set to the minimum allowed. This may be called at anytime to set
+// a new minimum capacity.
 //
 // Setting a larger minimum capacity may be used to prevent resizing when the
 // number of stored items changes frequently across a wide range.
@@ -371,7 +385,7 @@ func (q *Deque) shrinkIfExcess() {
 	}
 }
 
-// resize resizes the deque to fit exactly twice its current contents.  This is
+// resize resizes the deque to fit exactly twice its current contents. This is
 // used to grow the queue when it is full, and also to shrink it when it is
 // only a quarter full.
 func (q *Deque) resize() {

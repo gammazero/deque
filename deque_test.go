@@ -20,6 +20,12 @@ func TestEmpty(t *testing.T) {
 	if idx != -1 {
 		t.Error("should return -1 index for nil deque")
 	}
+	idx = q.RIndex(func(item interface{}) bool {
+		return true
+	})
+	if idx != -1 {
+		t.Error("should return -1 index for nil deque")
+	}
 }
 
 func TestNil(t *testing.T) {
@@ -32,6 +38,12 @@ func TestNil(t *testing.T) {
 	}
 	q.Rotate(5)
 	idx := q.Index(func(item interface{}) bool {
+		return true
+	})
+	if idx != -1 {
+		t.Error("should return -1 index for nil deque")
+	}
+	idx = q.RIndex(func(item interface{}) bool {
 		return true
 	})
 	if idx != -1 {
@@ -408,9 +420,36 @@ func TestIndex(t *testing.T) {
 		return c == 'H'
 	})
 	if idx != 0 {
-		t.Fatal("Expected index 7, got", idx)
+		t.Fatal("Expected index 0, got", idx)
 	}
 	idx = q.Index(func(item interface{}) bool {
+		return false
+	})
+	if idx != -1 {
+		t.Fatal("Expected index -1, got", idx)
+	}
+}
+
+func TestRIndex(t *testing.T) {
+	var q Deque
+	for _, x := range "Hello, 世界" {
+		q.PushBack(x)
+	}
+	idx := q.RIndex(func(item interface{}) bool {
+		c := item.(rune)
+		return unicode.Is(unicode.Han, c)
+	})
+	if idx != 8 {
+		t.Fatal("Expected index 8, got", idx)
+	}
+	idx = q.RIndex(func(item interface{}) bool {
+		c := item.(rune)
+		return c == 'H'
+	})
+	if idx != 0 {
+		t.Fatal("Expected index 0, got", idx)
+	}
+	idx = q.RIndex(func(item interface{}) bool {
 		return false
 	})
 	if idx != -1 {
