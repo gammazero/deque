@@ -29,7 +29,7 @@ func TestEmpty(t *testing.T) {
 }
 
 func TestNil(t *testing.T) {
-	q := New[int]()
+	var q *Deque[int]
 	if q.Len() != 0 {
 		t.Error("expected q.Len() == 0")
 	}
