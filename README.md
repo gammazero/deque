@@ -32,6 +32,14 @@ For maximum speed, this deque implementation leaves concurrency safety up to the
 
 Since it is OK for the deque to contain a `nil` value, it is necessary to either panic or return a second boolean value to indicate the deque is empty, when reading or removing an element.  This deque panics when reading from an empty deque.  This is a run-time check to help catch programming errors, which may be missed if a second return value is ignored.  Simply check `Deque.Len()` before reading from the deque.
 
+## Generics
+
+Deque uses generics to create a Deque that contains items of the type specified. To create a Deque that holds a specific type, provide a type argument to New or with the variable declaration. For example:
+```go
+    stringDeque := deque.New[string]()
+    var intDeque deque.Deque[int]
+```
+
 ## Example
 
 ```go
@@ -43,7 +51,7 @@ import (
 )
 
 func main() {
-    var q deque.Deque
+    var q deque.Deque[string]
     q.PushBack("foo")
     q.PushBack("bar")
     q.PushBack("baz")
