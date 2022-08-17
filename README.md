@@ -22,9 +22,9 @@ Deque generalizes a queue and a stack, to efficiently add and remove items at ei
 
 ## Ring-buffer Performance
 
-This deque implementation is optimized for CPU and GC performance.  The circular buffer automatically re-sizes by powers of two, growing when additional capacity is needed and shrinking when only a quarter of the capacity is used, and uses bitwise arithmetic for all calculations.  Since growth is by powers of two, adding elements will only cause O(log n) allocations. A minimum capacity can be set so that there is no resizing at or below that amount.
+This deque implementation is optimized for CPU and GC performance.  The circular buffer automatically re-sizes by powers of two, growing when additional capacity is needed and shrinking when only a quarter of the capacity is used, and uses bitwise arithmetic for all calculations.  Since growth is by powers of two, adding elements will only cause O(log n) allocations. A minimum capacity can be set so that there is no resizing at or below that specified amount.
 
-The ring-buffer implementation improves memory and time performance with fewer GC pauses, compared to implementations based on slices and linked lists.  By wrapping around the buffer, previously used space is reused, making allocation unnecessary until all buffer capacity is used.  This is particularly efficient when data going into the dequeue is relatively balanced against data coming out.  However, if size changes are very large and only fill and then empty then deque, the ring structure offers little benefit for memory reuse.  For that usage pattern a different implementation may be preferable.
+The ring-buffer implementation improves memory and time performance with fewer GC pauses, compared to implementations based on slices and linked lists.  By wrapping around the buffer, previously used space is reused, making allocation unnecessary until all buffer capacity is used. If the deque is only filled and then completely emptied before being filled again, then the ring structure offers little benefit for memory reuse over reusing a slice.
 
 For maximum speed, this deque implementation leaves concurrency safety up to the application to provide, however the application chooses, if needed at all.
 
