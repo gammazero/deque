@@ -179,9 +179,9 @@ func (q *Deque[T]) At(i int) T {
 	return q.buf[(q.head+i)&(len(q.buf)-1)]
 }
 
-// Set assigns the item to index i in the queue. Set shares the same purpose
-// than At but perform the opposite operation. The index i is the same index
-// defined by At. If the index is invalid, the call panics.
+// Set assigns the item to index i in the queue. Set indexes the deque the same
+// as At but perform the opposite operation. If the index is invalid, the call
+// panics.
 func (q *Deque[T]) Set(i int, item T) {
 	if i < 0 || i >= q.count {
 		panic(outOfRangeText(i, q.Len()))
