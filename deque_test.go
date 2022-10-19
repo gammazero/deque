@@ -401,6 +401,18 @@ func TestClear(t *testing.T) {
 			break
 		}
 	}
+
+	for i := 0; i < 128; i++ {
+		q.PushBack(i)
+	}
+	q.Clear()
+	// Check that there are no remaining references after Clear()
+	for i := 0; i < len(q.buf); i++ {
+		if q.buf[i] != 0 {
+			t.Error("queue has non-nil deleted elements after Clear()")
+			break
+		}
+	}
 }
 
 func TestIndex(t *testing.T) {

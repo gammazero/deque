@@ -1,11 +1,13 @@
 package deque
 
+import "fmt"
+
 // minCapacity is the smallest capacity that deque may have. Must be power of 2
 // for bitwise modulus: x % n == x & (n - 1).
 const minCapacity = 16
 
 // Deque represents a single instance of the deque data structure. A Deque
-// instance contains items of the type sepcified by the type argument.
+// instance contains items of the type specified by the type argument.
 type Deque[T any] struct {
 	buf    []T
 	head   int
@@ -19,15 +21,17 @@ type Deque[T any] struct {
 // operates on items of the type specified by the type argument. For example,
 // to create a Deque that contains strings,
 //
-//   stringDeque := deque.New[string]()
+//	stringDeque := deque.New[string]()
 //
 // To create a Deque with capacity to store 2048 ints without resizing, and
 // that will not resize below space for 32 items when removing items:
-//   d := deque.New[int](2048, 32)
+//
+//	d := deque.New[int](2048, 32)
 //
 // To create a Deque that has not yet allocated memory, but after it does will
 // never resize to have space for less than 64 items:
-//   d := deque.New[int](0, 64)
+//
+//	d := deque.New[int](0, 64)
 //
 // Any size values supplied here are rounded up to the nearest power of 2.
 func New[T any](size ...int) *Deque[T] {
@@ -77,8 +81,8 @@ func (q *Deque[T]) Len() int {
 }
 
 // PushBack appends an element to the back of the queue. Implements FIFO when
-// elements are removed with PopFront(), and LIFO when elements are removed
-// with PopBack().
+// elements are removed with PopFront, and LIFO when elements are removed with
+// PopBack.
 func (q *Deque[T]) PushBack(elem T) {
 	q.growIfFull()
 
@@ -99,7 +103,7 @@ func (q *Deque[T]) PushFront(elem T) {
 }
 
 // PopFront removes and returns the element from the front of the queue.
-// Implements FIFO when used with PushBack(). If the queue is empty, the call
+// Implements FIFO when used with PushBack. If the queue is empty, the call
 // panics.
 func (q *Deque[T]) PopFront() T {
 	if q.count <= 0 {
@@ -117,7 +121,7 @@ func (q *Deque[T]) PopFront() T {
 }
 
 // PopBack removes and returns the element from the back of the queue.
-// Implements LIFO when used with PushBack(). If the queue is empty, the call
+// Implements LIFO when used with PushBack. If the queue is empty, the call
 // panics.
 func (q *Deque[T]) PopBack() T {
 	if q.count <= 0 {
@@ -138,8 +142,7 @@ func (q *Deque[T]) PopBack() T {
 }
 
 // Front returns the element at the front of the queue. This is the element
-// that would be returned by PopFront(). This call panics if the queue is
-// empty.
+// that would be returned by PopFront. This call panics if the queue is empty.
 func (q *Deque[T]) Front() T {
 	if q.count <= 0 {
 		panic("deque: Front() called when empty")
@@ -148,7 +151,7 @@ func (q *Deque[T]) Front() T {
 }
 
 // Back returns the element at the back of the queue. This is the element that
-// would be returned by PopBack(). This call panics if the queue is empty.
+// would be returned by PopBack. This call panics if the queue is empty.
 func (q *Deque[T]) Back() T {
 	if q.count <= 0 {
 		panic("deque: Back() called when empty")
@@ -170,21 +173,21 @@ func (q *Deque[T]) Back() T {
 // in the buffer must be readable without altering the buffer contents.
 func (q *Deque[T]) At(i int) T {
 	if i < 0 || i >= q.count {
-		panic("deque: At() called with index out of range")
+		panic(outOfRangeText(i, q.Len()))
 	}
 	// bitwise modulus
 	return q.buf[(q.head+i)&(len(q.buf)-1)]
 }
 
-// Set puts the element at index i in the queue. Set shares the same purpose
-// than At() but perform the opposite operation. The index i is the same index
-// defined by At(). If the index is invalid, the call panics.
-func (q *Deque[T]) Set(i int, elem T) {
+// Set assigns the item to index i in the queue. Set indexes the deque the same
+// as At but perform the opposite operation. If the index is invalid, the call
+// panics.
+func (q *Deque[T]) Set(i int, item T) {
 	if i < 0 || i >= q.count {
-		panic("deque: Set() called with index out of range")
+		panic(outOfRangeText(i, q.Len()))
 	}
 	// bitwise modulus
-	q.buf[(q.head+i)&(len(q.buf)-1)] = elem
+	q.buf[(q.head+i)&(len(q.buf)-1)] = item
 }
 
 // Clear removes all elements from the queue, but retains the current capacity.
@@ -193,11 +196,11 @@ func (q *Deque[T]) Set(i int, elem T) {
 // only added. Only when items are removed is the queue subject to getting
 // resized smaller.
 func (q *Deque[T]) Clear() {
-	// bitwise modulus
-	modBits := len(q.buf) - 1
 	var zero T
-	for h := q.head; h != q.tail; h = (h + 1) & modBits {
-		q.buf[h] = zero
+	modBits := len(q.buf) - 1
+	h := q.head
+	for i := 0; i < q.Len(); i++ {
+		q.buf[(h+i)&modBits] = zero
 	}
 	q.head = 0
 	q.tail = 0
@@ -205,9 +208,9 @@ func (q *Deque[T]) Clear() {
 }
 
 // Rotate rotates the deque n steps front-to-back. If n is negative, rotates
-// back-to-front. Having Deque provide Rotate() avoids resizing that could
-// happen if implementing rotation using only Pop and Push methods. If q.Len()
-// is one or less, or q is nil, then Rotate does nothing.
+// back-to-front. Having Deque provide Rotate avoids resizing that could happen
+// if implementing rotation using only Pop and Push methods. If q.Len() is one
+// or less, or q is nil, then Rotate does nothing.
 func (q *Deque[T]) Rotate(n int) {
 	if q.Len() <= 1 {
 		return
@@ -294,7 +297,7 @@ func (q *Deque[T]) RIndex(f func(T) bool) int {
 // either of the ends of the queue.
 func (q *Deque[T]) Insert(at int, item T) {
 	if at < 0 || at > q.count {
-		panic("deque: Insert() called with index out of range")
+		panic(outOfRangeText(at, q.Len()))
 	}
 	if at*2 < q.count {
 		q.PushFront(item)
@@ -327,7 +330,7 @@ func (q *Deque[T]) Insert(at int, item T) {
 // either of the ends of the queue.
 func (q *Deque[T]) Remove(at int) T {
 	if at < 0 || at >= q.Len() {
-		panic("deque: Remove() called with index out of range")
+		panic(outOfRangeText(at, q.Len()))
 	}
 
 	rm := (q.head + at) & (len(q.buf) - 1)
@@ -410,4 +413,8 @@ func (q *Deque[T]) resize() {
 	q.head = 0
 	q.tail = q.count
 	q.buf = newBuf
+}
+
+func outOfRangeText(i, len int) string {
+	return fmt.Sprintf("deque: index out of range %d with length %d", i, len)
 }
