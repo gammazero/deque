@@ -624,6 +624,10 @@ func TestSwap(t *testing.T) {
 	if q.At(3) != "b" {
 		t.Fatal("wrong value at index 3")
 	}
+	q.Swap(2, 2)
+	if q.At(2) != "c" {
+		t.Fatal("wrong value at index 2")
+	}
 
 	assertPanics(t, "should panic when removing out of range", func() {
 		q.Swap(1, 5)

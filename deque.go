@@ -369,6 +369,9 @@ func (q *Deque[T]) SetMinCapacity(minCapacityExp uint) {
 func (q *Deque[T]) Swap(idxA, idxB int) {
 	q.checkRange(idxA)
 	q.checkRange(idxB)
+	if idxA == idxB {
+		return
+	}
 
 	realA := (q.head + idxA) & (len(q.buf) - 1)
 	realB := (q.head + idxB) & (len(q.buf) - 1)
