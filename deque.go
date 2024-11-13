@@ -172,9 +172,7 @@ func (q *Deque[T]) Back() T {
 // and when full the oldest is popped from the other end. All the log entries
 // in the buffer must be readable without altering the buffer contents.
 func (q *Deque[T]) At(i int) T {
-	if i < 0 || i >= q.count {
-		panic(outOfRangeText(i, q.Len()))
-	}
+	q.checkRange(i)
 	// bitwise modulus
 	return q.buf[(q.head+i)&(len(q.buf)-1)]
 }
@@ -183,9 +181,7 @@ func (q *Deque[T]) At(i int) T {
 // as At but perform the opposite operation. If the index is invalid, the call
 // panics.
 func (q *Deque[T]) Set(i int, item T) {
-	if i < 0 || i >= q.count {
-		panic(outOfRangeText(i, q.Len()))
-	}
+	q.checkRange(i)
 	// bitwise modulus
 	q.buf[(q.head+i)&(len(q.buf)-1)] = item
 }
@@ -288,16 +284,21 @@ func (q *Deque[T]) RIndex(f func(T) bool) int {
 
 // Insert is used to insert an element into the middle of the queue, before the
 // element at the specified index. Insert(0,e) is the same as PushFront(e) and
-// Insert(Len(),e) is the same as PushBack(e). Accepts only non-negative index
-// values, and panics if index is out of range.
+// Insert(Len(),e) is the same as PushBack(e). Out of range indexes result in
+// pushing the item onto the front of back of the deque.
 //
 // Important: Deque is optimized for O(1) operations at the ends of the queue,
 // not for operations in the the middle. Complexity of this function is
 // constant plus linear in the lesser of the distances between the index and
 // either of the ends of the queue.
 func (q *Deque[T]) Insert(at int, item T) {
-	if at < 0 || at > q.count {
-		panic(outOfRangeText(at, q.Len()))
+	if at <= 0 {
+		q.PushFront(item)
+		return
+	}
+	if at >= q.Len() {
+		q.PushBack(item)
+		return
 	}
 	if at*2 < q.count {
 		q.PushFront(item)
@@ -329,10 +330,7 @@ func (q *Deque[T]) Insert(at int, item T) {
 // constant plus linear in the lesser of the distances between the index and
 // either of the ends of the queue.
 func (q *Deque[T]) Remove(at int) T {
-	if at < 0 || at >= q.Len() {
-		panic(outOfRangeText(at, q.Len()))
-	}
-
+	q.checkRange(at)
 	rm := (q.head + at) & (len(q.buf) - 1)
 	if at*2 < q.count {
 		for i := 0; i < at; i++ {
@@ -363,6 +361,26 @@ func (q *Deque[T]) SetMinCapacity(minCapacityExp uint) {
 		q.minCap = 1 << minCapacityExp
 	} else {
 		q.minCap = minCapacity
+	}
+}
+
+// Swap exchanges the two values at idxA and idxB. It panics if either index is
+// out of range.
+func (q *Deque[T]) Swap(idxA, idxB int) {
+	q.checkRange(idxA)
+	q.checkRange(idxB)
+	if idxA == idxB {
+		return
+	}
+
+	realA := (q.head + idxA) & (len(q.buf) - 1)
+	realB := (q.head + idxB) & (len(q.buf) - 1)
+	q.buf[realA], q.buf[realB] = q.buf[realB], q.buf[realA]
+}
+
+func (q *Deque[T]) checkRange(i int) {
+	if i < 0 || i >= q.count {
+		panic(fmt.Sprintf("deque: index out of range %d with length %d", i, q.Len()))
 	}
 }
 
@@ -413,8 +431,4 @@ func (q *Deque[T]) resize() {
 	q.head = 0
 	q.tail = q.count
 	q.buf = newBuf
-}
-
-func outOfRangeText(i, len int) string {
-	return fmt.Sprintf("deque: index out of range %d with length %d", i, len)
 }
