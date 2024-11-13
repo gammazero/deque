@@ -250,9 +250,43 @@ func TestBack(t *testing.T) {
 	}
 }
 
+func TestGrow(t *testing.T) {
+	var q Deque[int]
+	assertPanics(t, "should panic when calling New with too many args", func() {
+		q.Grow(-1)
+	})
+
+	q.Grow(35)
+	if q.Cap() != 64 {
+		t.Fatal(t, "did not grow to expected capacity")
+	}
+
+	q.Grow(55)
+	if q.Cap() != 64 {
+		t.Fatal(t, "expected no capacity change")
+	}
+
+	q.Grow(77)
+	if q.Cap() != 128 {
+		t.Fatal(t, "did not grow to expected capacity")
+	}
+
+	for i := 0; i < 127; i++ {
+		q.PushBack(i)
+	}
+	if q.Cap() != 128 {
+		t.Fatal(t, "expected no capacity change")
+	}
+
+	q.Grow(2)
+	if q.Cap() != 256 {
+		t.Fatal(t, "did not grow to expected capacity")
+	}
+}
+
 func TestNew(t *testing.T) {
 	minCap := 64
-	q := New[string](0, minCap)
+	q := New[string](minCap)
 	if q.Cap() != 0 {
 		t.Fatal("should not have allowcated mem yet")
 	}
@@ -264,9 +298,9 @@ func TestNew(t *testing.T) {
 	if q.Cap() != minCap {
 		t.Fatalf("worng capactiy expected %d, got %d", minCap, q.Cap())
 	}
-
 	curCap := 128
-	q = New[string](curCap, minCap)
+	q = New[string](minCap)
+	q.Grow(curCap)
 	if q.Cap() != curCap {
 		t.Fatalf("Cap() should return %d, got %d", curCap, q.Cap())
 	}
@@ -277,6 +311,10 @@ func TestNew(t *testing.T) {
 	if q.Cap() != curCap {
 		t.Fatalf("Cap() should return %d, got %d", curCap, q.Cap())
 	}
+
+	assertPanics(t, "should panic when calling New with too many args", func() {
+		New[int](64, 128)
+	})
 }
 
 func checkRotate(t *testing.T, size int) {
@@ -500,7 +538,8 @@ func TestInsert(t *testing.T) {
 		}
 	}
 
-	qs := New[string](16)
+	qs := New[string]()
+	qs.Grow(16)
 
 	for i := 0; i < qs.Cap(); i++ {
 		qs.PushBack(fmt.Sprint(i))
