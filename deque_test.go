@@ -601,6 +601,38 @@ func TestRemove(t *testing.T) {
 	}
 }
 
+func TestSwap(t *testing.T) {
+	var q Deque[string]
+
+	q.PushBack("a")
+	q.PushBack("b")
+	q.PushBack("c")
+	q.PushBack("d")
+	q.PushBack("e")
+
+	q.Swap(0, 4)
+	if q.Front() != "e" {
+		t.Fatal("wrong value at front")
+	}
+	if q.Back() != "a" {
+		t.Fatal("wrong value at back")
+	}
+	q.Swap(3, 1)
+	if q.At(1) != "d" {
+		t.Fatal("wrong value at index 1")
+	}
+	if q.At(3) != "b" {
+		t.Fatal("wrong value at index 3")
+	}
+
+	assertPanics(t, "should panic when removing out of range", func() {
+		q.Swap(1, 5)
+	})
+	assertPanics(t, "should panic when removing out of range", func() {
+		q.Swap(5, 1)
+	})
+}
+
 func TestFrontBackOutOfRangePanics(t *testing.T) {
 	const msg = "should panic when peeking empty queue"
 	var q Deque[int]
@@ -687,19 +719,23 @@ func TestSetOutOfRangePanics(t *testing.T) {
 func TestInsertOutOfRangePanics(t *testing.T) {
 	q := new(Deque[string])
 
-	assertPanics(t, "should panic when inserting out of range", func() {
-		q.Insert(1, "X")
-	})
+	q.Insert(1, "A")
+	if q.Front() != "A" {
+		t.Fatal("expected A at front")
+	}
+	if q.Back() != "A" {
+		t.Fatal("expected A at back")
+	}
 
-	q.PushBack("A")
+	q.Insert(-1, "B")
+	if q.Front() != "B" {
+		t.Fatal("expected B at front")
+	}
 
-	assertPanics(t, "should panic when inserting at negative index", func() {
-		q.Insert(-1, "Y")
-	})
-
-	assertPanics(t, "should panic when inserting out of range", func() {
-		q.Insert(2, "B")
-	})
+	q.Insert(999, "C")
+	if q.Back() != "C" {
+		t.Fatal("expected C at back")
+	}
 }
 
 func TestRemoveOutOfRangePanics(t *testing.T) {
