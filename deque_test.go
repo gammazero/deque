@@ -385,14 +385,14 @@ func TestAt(t *testing.T) {
 	// Front to back.
 	for j := 0; j < q.Len(); j++ {
 		if q.At(j) != j {
-			t.Errorf("index %d doesn't contain %d", j, j)
+			t.Errorf("wrong item at index %d", j)
 		}
 	}
 
 	// Back to front
-	for j := 1; j <= q.Len(); j++ {
-		if q.At(q.Len()-j) != q.Len()-j {
-			t.Errorf("index %d doesn't contain %d", q.Len()-j, q.Len()-j)
+	for j := q.Len() - 1; j >= 0; j-- {
+		if q.At(j) != j {
+			t.Errorf("wrong item at index %d", j)
 		}
 	}
 }
@@ -673,6 +673,227 @@ func TestSwap(t *testing.T) {
 	assertPanics(t, "should panic when removing out of range", func() {
 		q.Swap(5, 1)
 	})
+}
+
+func TestIter(t *testing.T) {
+	var q Deque[int]
+
+	for range q.Iter() {
+		t.Fatal("iterated when empty")
+	}
+
+	q.Grow(50)
+	for i := 0; i < 50; i++ {
+		q.PushBack(i)
+	}
+
+	// Front to back.
+	expect := 0
+	for i, item := range q.Iter() {
+		if i != expect {
+			t.Fatalf("expected index %d, got %d", expect, i)
+		}
+		if item != i {
+			t.Errorf("index %d contains %d", i, item)
+		}
+		if i == 40 {
+			break
+		}
+		expect++
+	}
+
+	assertPanics(t, "Iter must panic when deque modified during iteration", func() {
+		for i, _ := range q.Iter() {
+			if i == 42 {
+				q.PushBack(51)
+			}
+		}
+	})
+}
+
+func TestRIter(t *testing.T) {
+	var q Deque[int]
+
+	for range q.RIter() {
+		t.Fatal("iterated when empty")
+	}
+
+	q.Grow(50)
+	for i := 0; i < 50; i++ {
+		q.PushBack(i)
+	}
+
+	// Back to fron
+	expect := 49
+	for i, item := range q.RIter() {
+		if i != expect {
+			t.Fatalf("expected index %d, got %d", expect, i)
+		}
+		if item != i {
+			t.Fatalf("index %d contains %d", i, item)
+		}
+		if i == 10 {
+			break
+		}
+		expect--
+	}
+
+	assertPanics(t, "RIter must panic when deque modified during iteration", func() {
+		for i, _ := range q.RIter() {
+			if i == 42 {
+				q.PushBack(51)
+			}
+		}
+	})
+}
+
+func TestIterPopBack(t *testing.T) {
+	var q Deque[int]
+	size := minCapacity * 5
+
+	q.Grow(size)
+	for i := 0; i < size; i++ {
+		q.PushBack(i)
+	}
+
+	last := q.Front()
+	var removed, lastRm int
+	for i := range q.IterPopBack() {
+		removed++
+		lastRm = i
+	}
+
+	if last != lastRm {
+		t.Fatal("did not expose expected item list")
+	}
+	if removed != size {
+		t.Fatal("wrong removed count")
+	}
+	if lastRm != 0 {
+		t.Fatal("wrong last item removed")
+	}
+	if q.Len() != 0 {
+		t.Error("q.Len() =", q.Len(), "expected 0")
+	}
+
+	q.Grow(size)
+	for i := 0; i < size; i++ {
+		q.PushBack(i)
+	}
+	last = q.Front()
+	removed = 0
+	for i := range q.IterPopBack() {
+		removed++
+		lastRm = i
+	}
+	if last != lastRm {
+		t.Fatal("did not expose expected item list")
+	}
+	if removed != size {
+		t.Fatal("wrong removed count, got", removed, " expected", size)
+	}
+	if q.Len() != 0 {
+		t.Error("q.Len() =", q.Len(), "expected 0")
+	}
+	for range q.IterPopBack() {
+		t.Fatal("iteration with 0 items")
+	}
+
+	for i := 0; i < 5; i++ {
+		q.PushBack(i)
+	}
+	c := q.Cap()
+	removed = 0
+	for range q.IterPopBack() {
+		removed++
+	}
+	if removed != 5 {
+		t.Fatal("wrong removed count")
+	}
+	if q.Cap() != c {
+		t.Fatal("unexpected capacity change")
+	}
+
+	for i := 0; i < 65; i++ {
+		q.PushBack(i)
+	}
+	c = q.Cap()
+	removed = 0
+	for range q.IterPopBack() {
+		removed++
+		if removed == 3 {
+			break
+		}
+	}
+	if q.Cap() != c {
+		t.Fatal("unexpected capacity change")
+	}
+}
+
+func TestIterPopFront(t *testing.T) {
+	var q Deque[int]
+	size := minCapacity * 5
+
+	q.Grow(size)
+	for i := 0; i < size; i++ {
+		q.PushBack(i)
+	}
+	last := q.Back()
+	var lastRm, removed int
+	for i := range q.IterPopFront() {
+		removed++
+		lastRm = i
+	}
+	if last != lastRm {
+		t.Fatal("did not expose expected item list")
+	}
+	if removed != size {
+		t.Fatal("wrong removed count")
+	}
+	if lastRm != size-1 {
+		t.Fatal("wrong last item removed")
+	}
+	if q.Len() != 0 {
+		t.Error("q.Len() =", q.Len(), "expected 0")
+	}
+	for range q.IterPopFront() {
+		t.Fatal("iteration with 0 items")
+	}
+
+	for i := 0; i < 5; i++ {
+		q.PushBack(i)
+	}
+	c := q.Cap()
+	removed = 0
+	for range q.IterPopFront() {
+		removed++
+	}
+	if removed != 5 {
+		t.Fatal("wrong removed count")
+	}
+	if q.Cap() != c {
+		t.Fatal("unexpected capacity change")
+	}
+
+	for i := 0; i < 65; i++ {
+		q.PushBack(i)
+	}
+	c = q.Cap()
+	removed = 0
+	for range q.IterPopFront() {
+		removed++
+		if removed == 3 {
+			break
+		}
+	}
+	for range q.IterPopFront() {
+		if q.Len() == 32 {
+			break
+		}
+	}
+	if q.Cap() == c {
+		t.Fatal("expected capacity change")
+	}
 }
 
 func TestFrontBackOutOfRangePanics(t *testing.T) {

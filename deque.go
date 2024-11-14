@@ -1,6 +1,9 @@
 package deque
 
-import "fmt"
+import (
+	"fmt"
+	"iter"
+)
 
 // minCapacity is the smallest capacity that deque may have. Must be power of 2
 // for bitwise modulus: x % n == x & (n - 1).
@@ -94,6 +97,29 @@ func (q *Deque[T]) PopFront() T {
 	return ret
 }
 
+// IterPopFront returns an iterator the iteratively removes items from the
+// Front of the deque. This is more efficient than removing items one at a time
+// because it avoids intermediate resizing. If a resize is necessary, only one
+// is done when iteration ends.
+func (q *Deque[T]) IterPopFront() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		if q.Len() == 0 {
+			return
+		}
+		var zero T
+		for q.count != 0 {
+			ret := q.buf[q.head]
+			q.buf[q.head] = zero
+			q.head = q.next(q.head)
+			q.count--
+			if !yield(ret) {
+				break
+			}
+		}
+		q.shrinkToFit()
+	}
+}
+
 // PopBack removes and returns the element from the back of the queue.
 // Implements LIFO when used with PushBack. If the queue is empty, the call
 // panics.
@@ -113,6 +139,29 @@ func (q *Deque[T]) PopBack() T {
 
 	q.shrinkIfExcess()
 	return ret
+}
+
+// IterPopBack returns an iterator the iteratively removes items from the back
+// of the deque. This is more efficient than removing items one at a time
+// because it avoids intermediate resizing. If a resize is necessary, only one
+// is done when iteration ends.
+func (q *Deque[T]) IterPopBack() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		if q.Len() == 0 {
+			return
+		}
+		var zero T
+		for q.count != 0 {
+			q.tail = q.prev(q.tail)
+			ret := q.buf[q.tail]
+			q.buf[q.tail] = zero
+			q.count--
+			if !yield(ret) {
+				break
+			}
+		}
+		q.shrinkToFit()
+	}
 }
 
 // Front returns the element at the front of the queue. This is the element
@@ -158,6 +207,50 @@ func (q *Deque[T]) Set(i int, item T) {
 	q.checkRange(i)
 	// bitwise modulus
 	q.buf[(q.head+i)&(len(q.buf)-1)] = item
+}
+
+// Iter returns a go iterator to range over all items in the Deque, yielding
+// the index of each item and the item, from front to back. Modification of
+// Deque during iteration panics.
+func (q *Deque[T]) Iter() iter.Seq2[int, T] {
+	return func(yield func(int, T) bool) {
+		if q.Len() == 0 {
+			return
+		}
+		count := q.count
+		head := q.head
+		for i := 0; i < count; i++ {
+			if q.count != count {
+				panic("deque: modified during iteration")
+			}
+			if !yield(i, q.buf[head]) {
+				return
+			}
+			head = q.next(head)
+		}
+	}
+}
+
+// RIter returns a go iterator to range over all items in the Deque, yielding
+// the index of each item and the item, from back to front. Modification of
+// Deque during iteration panics.
+func (q *Deque[T]) RIter() iter.Seq2[int, T] {
+	return func(yield func(int, T) bool) {
+		if q.Len() == 0 {
+			return
+		}
+		count := q.count
+		tail := q.tail
+		for i := count - 1; i >= 0; i-- {
+			if q.count != count {
+				panic("deque: modified during iteration")
+			}
+			tail = q.prev(tail)
+			if !yield(i, q.buf[tail]) {
+				return
+			}
+		}
+	}
 }
 
 // Clear removes all elements from the queue, but retains the current capacity.
@@ -418,6 +511,23 @@ func (q *Deque[T]) growIfFull() {
 func (q *Deque[T]) shrinkIfExcess() {
 	if len(q.buf) > q.minCap && (q.count<<2) == len(q.buf) {
 		q.resize(q.count << 1)
+	}
+}
+
+func (q *Deque[T]) shrinkToFit() {
+	if len(q.buf) > q.minCap && (q.count<<2) <= len(q.buf) {
+		if q.count == 0 {
+			q.head = 0
+			q.tail = 0
+			q.buf = make([]T, minCapacity)
+			return
+		}
+
+		c := minCapacity
+		for c < q.count {
+			c <<= 1
+		}
+		q.resize(c)
 	}
 }
 
