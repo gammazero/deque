@@ -33,10 +33,10 @@ type Deque[T any] struct {
 // To ensure the Deque can store 1000 items without needing to resize while
 // items are added:
 //
-//	d.Grou(1000)
+//	d.Grow(1000)
 //
-// Any  values supplied here are rounded up to the nearest power of 2,
-// since the Deque grows by powers of 2.
+// Any values supplied here are rounded up to the nearest power of 2, since the
+// Deque grows by powers of 2.
 func New[T any](initVals ...int) *Deque[T] {
 	var baseCap int
 	if len(initVals) >= 1 {
@@ -373,19 +373,14 @@ func (q *Deque[T]) Remove(at int) T {
 	return q.PopBack()
 }
 
-// SetMinCapacity sets a minimum capacity of 2^minCapacityExp. If the value of
-// the minimum capacity is less than or equal to the minimum allowed, then
-// capacity is set to the minimum allowed. This may be called at anytime to set
-// a new minimum capacity.
-//
-// Setting a larger minimum capacity may be used to prevent resizing when the
-// number of stored items changes frequently across a wide range.
-func (q *Deque[T]) SetMinCapacity(minCapacityExp uint) {
-	if 1<<minCapacityExp > minCapacity {
-		q.minCap = 1 << minCapacityExp
-	} else {
-		q.minCap = minCapacity
+// SetBaseCapacity sets a base capacity so that at least the specified number
+// of items can always be stored without resizing.
+func (q *Deque[T]) SetBaseCapacity(baseCap int) {
+	minCap := minCapacity
+	for minCap < baseCap {
+		minCap <<= 1
 	}
+	q.minCap = minCap
 }
 
 // Swap exchanges the two values at idxA and idxB. It panics if either index is
