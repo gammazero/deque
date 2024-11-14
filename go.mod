@@ -1,3 +1,3 @@
 module github.com/gammazero/deque
 
-go 1.22
+go 1.23
