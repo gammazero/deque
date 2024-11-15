@@ -8,52 +8,33 @@ const minCapacity = 16
 
 // Deque represents a single instance of the deque data structure. A Deque
 // instance contains items of the type specified by the type argument.
-type Deque[T any] struct {
-	buf    []T
-	head   int
-	tail   int
-	count  int
-	minCap int
-}
-
-// New creates a new Deque, optionally setting the base capacity when a
-// non-zero value is given. The returned Deque instance operates on items of
-// the type specified by the type argument. For example, to create a Deque that
-// contains strings do one of the following:
+//
+// For example, to create a Deque that contains strings do one of the
+// following:
 //
 //	var stringDeque deque.Deque[string]
-//	stringDeque := deque.New[string]()
-//	stringDeque := new(deque.New[string])
+//	stringDeque := new(deque.Deque[string])
+//	stringDeque := &deque.Deque[string]{}
 //
 // To create a Deque that will never resize to have space for less than 64
-// items, specify a base capacity when calling New:
+// items, specify a base capacity:
 //
-//	d := deque.New[int](64)
+//	var d deque.Deque[int]
+//	d.SetBaseCap(64)
 //
 // To ensure the Deque can store 1000 items without needing to resize while
 // items are added:
 //
 //	d.Grow(1000)
 //
-// Any values supplied here are rounded up to the nearest power of 2, since the
-// Deque grows by powers of 2.
-func New[T any](initVals ...int) *Deque[T] {
-	var baseCap int
-	if len(initVals) >= 1 {
-		if len(initVals) >= 2 {
-			panic("Deque.New: too many arguments")
-		}
-		baseCap = initVals[0]
-	}
-
-	minCap := minCapacity
-	for minCap < baseCap {
-		minCap <<= 1
-	}
-
-	return &Deque[T]{
-		minCap: minCap,
-	}
+// Any values supplied to SetBaseCap and Grow are rounded up to the nearest
+// power of 2, since the Deque grows by powers of 2.
+type Deque[T any] struct {
+	buf    []T
+	head   int
+	tail   int
+	count  int
+	minCap int
 }
 
 // Cap returns the current capacity of the Deque. If q is nil, q.Cap() is zero.
@@ -65,7 +46,7 @@ func (q *Deque[T]) Cap() int {
 }
 
 // Len returns the number of elements currently stored in the queue. If q is
-// nil, q.Len() is zero.
+// nil, q.Len() returns zero.
 func (q *Deque[T]) Len() int {
 	if q == nil {
 		return 0
@@ -196,9 +177,9 @@ func (q *Deque[T]) Clear() {
 	q.count = 0
 }
 
-// Grow grows the deque's capacity, if necessary, to guarantee space for
-// another n items. After Grow(n), at least n items can be written to the
-// buffer without another allocation. If n is negative, Grow will panic.
+// Grow grows deque's capacity, if necessary, to guarantee space for another n
+// items. After Grow(n), at least n items can be written to the deque without
+// another allocation. If n is negative, Grow panics.
 func (q *Deque[T]) Grow(n int) {
 	if n < 0 {
 		panic("deque.Grow: negative count")
@@ -373,9 +354,9 @@ func (q *Deque[T]) Remove(at int) T {
 	return q.PopBack()
 }
 
-// SetBaseCapacity sets a base capacity so that at least the specified number
-// of items can always be stored without resizing.
-func (q *Deque[T]) SetBaseCapacity(baseCap int) {
+// SetBaseCap sets a base capacity so that at least the specified number of
+// items can always be stored without resizing.
+func (q *Deque[T]) SetBaseCap(baseCap int) {
 	minCap := minCapacity
 	for minCap < baseCap {
 		minCap <<= 1

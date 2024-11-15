@@ -7,7 +7,7 @@ import (
 )
 
 func TestEmpty(t *testing.T) {
-	q := New[string]()
+	q := new(Deque[string])
 	if q.Len() != 0 {
 		t.Error("q.Len() =", q.Len(), "expect 0")
 	}
@@ -252,7 +252,7 @@ func TestBack(t *testing.T) {
 
 func TestGrow(t *testing.T) {
 	var q Deque[int]
-	assertPanics(t, "should panic when calling New with too many args", func() {
+	assertPanics(t, "should panic when calling Groe with invalid size", func() {
 		q.Grow(-1)
 	})
 
@@ -286,7 +286,8 @@ func TestGrow(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	minCap := 64
-	q := New[string](minCap)
+	q := &Deque[string]{}
+	q.SetBaseCap(minCap)
 	if q.Cap() != 0 {
 		t.Fatal("should not have allowcated mem yet")
 	}
@@ -299,7 +300,8 @@ func TestNew(t *testing.T) {
 		t.Fatalf("worng capactiy expected %d, got %d", minCap, q.Cap())
 	}
 	curCap := 128
-	q = New[string](minCap)
+	q = new(Deque[string])
+	q.SetBaseCap(minCap)
 	q.Grow(curCap)
 	if q.Cap() != curCap {
 		t.Fatalf("Cap() should return %d, got %d", curCap, q.Cap())
@@ -311,10 +313,6 @@ func TestNew(t *testing.T) {
 	if q.Cap() != curCap {
 		t.Fatalf("Cap() should return %d, got %d", curCap, q.Cap())
 	}
-
-	assertPanics(t, "should panic when calling New with too many args", func() {
-		New[int](64, 128)
-	})
 }
 
 func checkRotate(t *testing.T, size int) {
@@ -538,7 +536,7 @@ func TestInsert(t *testing.T) {
 		}
 	}
 
-	qs := New[string]()
+	qs := new(Deque[string])
 	qs.Grow(16)
 
 	for i := 0; i < qs.Cap(); i++ {
@@ -801,7 +799,7 @@ func TestRemoveOutOfRangePanics(t *testing.T) {
 
 func TestSetMBaseapacity(t *testing.T) {
 	var q Deque[string]
-	q.SetBaseCapacity(200)
+	q.SetBaseCap(200)
 	q.PushBack("A")
 	if q.minCap != 256 {
 		t.Fatal("wrong minimum capacity")
@@ -816,7 +814,7 @@ func TestSetMBaseapacity(t *testing.T) {
 	if q.Cap() != 256 {
 		t.Fatal("wrong buffer size")
 	}
-	q.SetBaseCapacity(0)
+	q.SetBaseCap(0)
 	if q.minCap != minCapacity {
 		t.Fatal("wrong minimum capacity")
 	}
@@ -914,7 +912,7 @@ func BenchmarkYoyo(b *testing.B) {
 
 func BenchmarkYoyoFixed(b *testing.B) {
 	var q Deque[int]
-	q.SetBaseCapacity(64000)
+	q.SetBaseCap(64000)
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < 65536; j++ {
 			q.PushBack(j)
