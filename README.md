@@ -36,7 +36,7 @@ Since it is OK for the deque to contain a `nil` value, it is necessary to either
 
 Deque uses generics to create a Deque that contains items of the type specified. To create a Deque that holds a specific type, provide a type argument to New or with the variable declaration. For example:
 ```go
-    stringDeque := deque.New[string]()
+    stringDeque := new(deque.New[string])
     var intDeque deque.Deque[int]
 ```
 
