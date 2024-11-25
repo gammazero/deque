@@ -2,6 +2,7 @@ package deque
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 	"unicode"
 )
@@ -920,5 +921,31 @@ func BenchmarkYoyoFixed(b *testing.B) {
 		for j := 0; j < 65536; j++ {
 			q.PopFront()
 		}
+	}
+}
+
+func BenchmarkClearContiguous(b *testing.B) {
+	var src Deque[int]
+	for i := range 1<<15 + 1<<14 {
+		src.PushBack(i)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		q := src
+		q.buf = slices.Clone(q.buf)
+		q.Clear()
+	}
+}
+
+func BenchmarkClearSplit(b *testing.B) {
+	var src Deque[int]
+	for i := range 1<<15 + 1<<14 {
+		src.PushFront(i)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		q := src
+		q.buf = slices.Clone(q.buf)
+		q.Clear()
 	}
 }

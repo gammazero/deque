@@ -166,12 +166,19 @@ func (q *Deque[T]) Set(i int, item T) {
 // only added. Only when items are removed is the queue subject to getting
 // resized smaller.
 func (q *Deque[T]) Clear() {
-	var zero T
-	modBits := len(q.buf) - 1
-	h := q.head
-	for i := 0; i < q.Len(); i++ {
-		q.buf[(h+i)&modBits] = zero
+	head, tail := q.head, q.tail
+
+	if head == tail {
+		// either zero or full, depending on count
+		head = 0
+		tail = q.count
+	} else if head > tail {
+		// non-contiguous buffer, clearing the tail
+		clear(q.buf[:tail])
+		// and setting up to clear the head
+		tail = len(q.buf)
 	}
+	clear(q.buf[head:tail])
 	q.head = 0
 	q.tail = 0
 	q.count = 0
