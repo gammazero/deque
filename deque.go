@@ -1,6 +1,9 @@
 package deque
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // minCapacity is the smallest capacity that deque may have. Must be power of 2
 // for bitwise modulus: x % n == x & (n - 1).
@@ -431,4 +434,51 @@ func (q *Deque[T]) resize(newSize int) {
 	q.head = 0
 	q.tail = q.count
 	q.buf = newBuf
+}
+
+// TakeSlice returns the contents of the queue as a contiguous slice,
+// leaving the queue empty.
+func (q *Deque[T]) TakeSlice() []T {
+	if q == nil {
+		return nil
+	}
+	if q.head == 0 {
+		// buffer is in correct order, no need to move memory
+	} else if q.head < q.tail {
+		// ..ABCDEFGH..
+		copy(q.buf, q.buf[q.head:q.tail])
+		// ABCDEFGHgh..
+		clear(q.buf[q.count:q.tail])
+		// ABCDEFGH....
+	} else {
+		free := len(q.buf) - q.count
+		headLen := len(q.buf) - q.head
+		if free >= headLen {
+			// Shift tail forwards and copy head to the correct position
+			//    tail head
+			//      v   v
+			// DEFGH....ABC
+			copy(q.buf[headLen:], q.buf[:q.tail])
+			// defDEFGH.ABC
+			copy(q.buf, q.buf[q.head:])
+			// ABCDEFGH.abc
+			clear(q.buf[q.head:])
+			// ABCDEFGH....
+		} else {
+			// Rotate in place, same as slices module does it.
+			// FGH..ABCDE or FGHABCDE
+			slices.Reverse(q.buf[:q.tail])
+			// HGF..ABCDE or HGFABCDE
+			slices.Reverse(q.buf[q.tail:])
+			// HGFEDCBA.. or HGFEDCBA
+			slices.Reverse(q.buf[:q.count])
+			// ABCDEFGH.. or ABCDEFGH
+		}
+	}
+	buf := q.buf[:q.count]
+	q.head = 0
+	q.tail = 0
+	q.count = 0
+	q.buf = nil
+	return buf
 }

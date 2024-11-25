@@ -2,6 +2,7 @@ package deque
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 	"unicode"
 )
@@ -48,6 +49,10 @@ func TestNil(t *testing.T) {
 	})
 	if idx != -1 {
 		t.Error("should return -1 index for nil deque")
+	}
+	slice := q.TakeSlice()
+	if slice != nil {
+		t.Error("should return nil slice for nil deque")
 	}
 }
 
@@ -795,6 +800,44 @@ func TestRemoveOutOfRangePanics(t *testing.T) {
 	assertPanics(t, "should panic when removing out of range", func() {
 		q.Remove(1)
 	})
+}
+
+func TestTakeSlice(t *testing.T) {
+	testData := make([]byte, minCapacity)
+	for i := range testData {
+		testData[i] = byte('A' + i)
+	}
+	for initPos := range minCapacity + 3 {
+		for length := range len(testData) {
+			// not running as individual tests to avoid polluting the output
+			// besides, they are small and fast enough to run all at once
+			q := new(Deque[byte])
+			for range initPos {
+				q.PushBack(255)
+				q.PopFront()
+			}
+			for _, el := range testData[:length] {
+				q.PushBack(el)
+			}
+
+			slice := q.TakeSlice()
+			if !slices.Equal(testData[:length], slice) {
+				t.Errorf("expected %v, got %v (pos %d, len %d)", testData[:length], slice, initPos, length)
+			}
+			leftover := slice[len(slice):cap(slice)]
+			for _, x := range leftover {
+				if x != 0 {
+					t.Errorf("slice's capacity was not zeroed out (pos %d, len %d)", initPos, length)
+				}
+			}
+			if len(slice) > 0 && cap(slice) != minCapacity {
+				t.Errorf("slice's capacity was not preserved (pos %d, len %d)", initPos, length)
+			}
+			if q.Len() != 0 || q.Cap() != 0 {
+				t.Errorf("deque was not cleared (pos %d, len %d)", initPos, length)
+			}
+		}
+	}
 }
 
 func TestSetMBaseapacity(t *testing.T) {
