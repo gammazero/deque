@@ -439,7 +439,7 @@ func (q *Deque[T]) resize(newSize int) {
 // TakeSlice returns the contents of the queue as a contiguous slice,
 // leaving the queue empty.
 func (q *Deque[T]) TakeSlice() []T {
-	if q == nil {
+	if q == nil || q.count == 0{
 		return nil
 	}
 	if q.head == 0 {
