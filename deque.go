@@ -166,22 +166,20 @@ func (q *Deque[T]) Set(i int, item T) {
 // only added. Only when items are removed is the queue subject to getting
 // resized smaller.
 func (q *Deque[T]) Clear() {
-	head, tail := q.head, q.tail
-
-	if head == tail {
-		// either zero or full, depending on count
-		head = 0
-		tail = q.count
-	} else if head > tail {
-		// non-contiguous buffer, clearing the tail
-		clear(q.buf[:tail])
-		// and setting up to clear the head
-		tail = len(q.buf)
+	if q.Len() == 0 {
+		return
 	}
-	clear(q.buf[head:tail])
+	head, tail := q.head, q.tail
+	q.count = 0
 	q.head = 0
 	q.tail = 0
-	q.count = 0
+
+	if head >= tail {
+		// [DEF....ABC]
+		clear(q.buf[head:])
+		head = 0
+	}
+	clear(q.buf[head:tail])
 }
 
 // Grow grows deque's capacity, if necessary, to guarantee space for another n
