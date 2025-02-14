@@ -821,6 +821,129 @@ func TestSetMBaseapacity(t *testing.T) {
 	}
 }
 
+func TestReplace(t *testing.T) {
+	var q Deque[int]
+	prev := make([]int, 5)
+	content1 := []int{1, 2, 3}
+	n := q.Replace(content1, prev)
+	if n != 0 {
+		t.Fatal("expected nothing replaced")
+	}
+	if q.Front() != 1 {
+		t.Fatal("wrong value for Fromt")
+	}
+	if q.Back() != 3 {
+		t.Fatal("wrong value for Back")
+	}
+
+	content2 := []int{4, 5}
+	n = q.Replace(content2, prev)
+	if n != len(content1) {
+		t.Fatalf("expected %d replaced items", len(content1))
+	}
+	for i := 0; i < n; i++ {
+		if prev[i] != content1[i] {
+			t.Fatal("did not get expected previous content, got:", prev)
+		}
+	}
+	if q.Len() != len(content2) {
+		t.Fatalf("q should have %d items", len(content2))
+	}
+	for i, v := range content2 {
+		if q.At(i) != v {
+			t.Fatal("unexpected content after replace")
+		}
+	}
+
+	content3 := []int{6, 7, 8, 9, 10, 11, 12}
+	n = q.Replace(content3, prev)
+	if n != len(content2) {
+		t.Fatalf("expected %d replaced items", len(content2))
+	}
+	for i := 0; i < n; i++ {
+		if prev[i] != content2[i] {
+			t.Fatal("did not get expected previous content, got:", prev)
+		}
+	}
+	if q.Len() != len(content3) {
+		t.Fatalf("q should have %d items", len(content3))
+	}
+	for i, v := range content3 {
+		if q.At(i) != v {
+			t.Fatal("unexpected content after replace")
+		}
+	}
+
+	n = q.Replace(nil, prev)
+	if n != len(prev) {
+		t.Fatalf("expected %d replaced items", len(prev))
+	}
+	for i := 0; i < n; i++ {
+		if prev[i] != content3[i] {
+			t.Fatal("did not get expected previous content, got:", prev)
+		}
+	}
+	if q.Len() != 0 {
+		t.Fatal("q should have 0 items")
+	}
+
+	content4 := []int{13, 14}
+	n = q.Replace(content4, prev)
+	if n != 0 {
+		t.Fatal("expected 0 replaced items")
+	}
+	if q.Len() != len(content4) {
+		t.Fatalf("q should have %d items", len(content4))
+	}
+
+	n = q.Replace(content1, nil)
+	if n != 0 {
+		t.Fatal("expected 0 replaced items")
+	}
+	if q.Len() != len(content1) {
+		t.Fatalf("q should have %d items", len(content1))
+	}
+
+	n = q.Replace(nil, nil)
+	if n != 0 {
+		t.Fatal("expected 0 replaced items")
+	}
+	if q.Len() != 0 {
+		t.Fatal("q should have 0 items")
+	}
+
+	content5 := make([]int, 0, q.Cap()+q.Cap()/2)
+	for i := 0; i < q.Cap(); i++ {
+		q.PushBack(i)
+		content5 = append(content5, 200)
+	}
+	for i := 0; i < q.Cap()/2; i++ {
+		q.PopFront()
+		q.PushBack(i + 100)
+		content5 = append(content5, 200)
+	}
+	first := q.Front()
+	last := q.At(len(prev) - 1)
+	n = q.Replace(content5, prev)
+	if n != len(prev) {
+		t.Fatalf("expected %d replaced items", len(prev))
+	}
+	if prev[0] != first {
+		t.Fatalf("expected previous[0] to be %d, got %d", first, prev[0])
+	}
+	if prev[len(prev)-1] != last {
+		t.Fatalf("expected last previous to be %d, got %d", last, prev[len(prev)-1])
+	}
+	if q.Len() != len(content5) {
+		t.Fatalf("q should have %d items", len(content5))
+	}
+	for i, v := range content5 {
+		if q.At(i) != v {
+			t.Fatal("unexpected content after replace")
+		}
+	}
+}
+
 func assertPanics(t *testing.T, name string, f func()) {
 	defer func() {
 		if r := recover(); r == nil {
