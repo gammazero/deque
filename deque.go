@@ -27,7 +27,7 @@ const minCapacity = 16
 //
 //	d.Grow(1000)
 //
-// Any values supplied to SetBaseCap and Grow are rounded up to the nearest
+// Any values supplied to [SetBaseCap] and [Grow] are rounded up to the nearest
 // power of 2, since the Deque grows by powers of 2.
 type Deque[T any] struct {
 	buf    []T
@@ -55,8 +55,8 @@ func (q *Deque[T]) Len() int {
 }
 
 // PushBack appends an element to the back of the queue. Implements FIFO when
-// elements are removed with PopFront, and LIFO when elements are removed with
-// PopBack.
+// elements are removed with [PopFront], and LIFO when elements are removed with
+// [PopBack].
 func (q *Deque[T]) PushBack(elem T) {
 	q.growIfFull()
 
@@ -77,7 +77,7 @@ func (q *Deque[T]) PushFront(elem T) {
 }
 
 // PopFront removes and returns the element from the front of the queue.
-// Implements FIFO when used with PushBack. If the queue is empty, the call
+// Implements FIFO when used with [PushBack]. If the queue is empty, the call
 // panics.
 func (q *Deque[T]) PopFront() T {
 	if q.count <= 0 {
@@ -95,7 +95,7 @@ func (q *Deque[T]) PopFront() T {
 }
 
 // PopBack removes and returns the element from the back of the queue.
-// Implements LIFO when used with PushBack. If the queue is empty, the call
+// Implements LIFO when used with [PushBack]. If the queue is empty, the call
 // panics.
 func (q *Deque[T]) PopBack() T {
 	if q.count <= 0 {
@@ -116,7 +116,8 @@ func (q *Deque[T]) PopBack() T {
 }
 
 // Front returns the element at the front of the queue. This is the element
-// that would be returned by PopFront. This call panics if the queue is empty.
+// that would be returned by [PopFront]. This call panics if the queue is
+// empty.
 func (q *Deque[T]) Front() T {
 	if q.count <= 0 {
 		panic("deque: Front() called when empty")
@@ -125,7 +126,7 @@ func (q *Deque[T]) Front() T {
 }
 
 // Back returns the element at the back of the queue. This is the element that
-// would be returned by PopBack. This call panics if the queue is empty.
+// would be returned by [PopBack]. This call panics if the queue is empty.
 func (q *Deque[T]) Back() T {
 	if q.count <= 0 {
 		panic("deque: Back() called when empty")
@@ -135,8 +136,8 @@ func (q *Deque[T]) Back() T {
 
 // At returns the element at index i in the queue without removing the element
 // from the queue. This method accepts only non-negative index values. At(0)
-// refers to the first element and is the same as Front(). At(Len()-1) refers
-// to the last element and is the same as Back(). If the index is invalid, the
+// refers to the first element and is the same as [Front]. At(Len()-1) refers
+// to the last element and is the same as [Back]. If the index is invalid, the
 // call panics.
 //
 // The purpose of At is to allow Deque to serve as a more general purpose
@@ -152,7 +153,7 @@ func (q *Deque[T]) At(i int) T {
 }
 
 // Set assigns the item to index i in the queue. Set indexes the deque the same
-// as At but perform the opposite operation. If the index is invalid, the call
+// as [At] but perform the opposite operation. If the index is invalid, the call
 // panics.
 func (q *Deque[T]) Set(i int, item T) {
 	q.checkRange(i)
@@ -211,6 +212,58 @@ func (q *Deque[T]) Grow(n int) {
 	} else {
 		q.resize(c)
 	}
+}
+
+// Replace replaces the entire contests of Deque with newItems (1st argument).
+// The old content that was replaced is written to replaced (2nd argument), up
+// to the size of replaced. If there is no new content to use as a replacement,
+// pass nil for newItems. If the previous content is not wanted, pass nil for
+// replaced. Calling Replace(nil, nil) is equivalent to calling [Clear].
+// Replace returns the number of items written to replaced.
+func (q *Deque[T]) Replace(newItems []T, replaced []T) int {
+	var n int
+	// If there are any existing items, move them into replaced.
+	if q.count != 0 {
+		head, tail := q.head, q.tail
+		q.count = 0
+		q.head = 0
+		q.tail = 0
+
+		if head >= tail {
+			// [DEF....ABC]
+			if len(replaced) != 0 {
+				n = copy(replaced, q.buf[head:])
+				replaced = replaced[n:]
+			}
+			clear(q.buf[head:])
+			head = 0
+		}
+		if len(replaced) != 0 {
+			n += copy(replaced, q.buf[head:tail])
+		}
+		clear(q.buf[head:tail])
+	}
+
+	// Copy new items into buffer.
+	if len(newItems) != 0 {
+		// Allocate new buffer if more space needed.
+		if len(q.buf) < len(newItems) {
+			newCap := len(q.buf)
+			if newCap == 0 {
+				newCap = minCapacity
+				q.minCap = minCapacity
+			}
+			for newCap < len(newItems) {
+				newCap <<= 1
+			}
+			q.buf = make([]T, newCap)
+		}
+		in := copy(q.buf, newItems)
+		q.count = in
+		q.tail = in
+	}
+
+	return n
 }
 
 // Rotate rotates the deque n steps front-to-back. If n is negative, rotates
@@ -279,7 +332,7 @@ func (q *Deque[T]) Index(f func(T) bool) int {
 
 // RIndex is the same as Index, but searches from Back to Front. The index
 // returned is from Front to Back, where index 0 is the index of the item
-// returned by Front().
+// returned by [Front].
 func (q *Deque[T]) RIndex(f func(T) bool) int {
 	if q.Len() > 0 {
 		modBits := len(q.buf) - 1
@@ -331,8 +384,8 @@ func (q *Deque[T]) Insert(at int, item T) {
 }
 
 // Remove removes and returns an element from the middle of the queue, at the
-// specified index. Remove(0) is the same as PopFront() and Remove(Len()-1) is
-// the same as PopBack(). Accepts only non-negative index values, and panics if
+// specified index. Remove(0) is the same as [PopFront] and Remove(Len()-1) is
+// the same as [PopBack]. Accepts only non-negative index values, and panics if
 // index is out of range.
 //
 // Important: Deque is optimized for O(1) operations at the ends of the queue,
