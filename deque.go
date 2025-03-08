@@ -303,8 +303,34 @@ func (q *Deque[T]) Grow(n int) {
 	}
 }
 
+// AppendTo appends from the Deque to the given slice. If the slice has
+// insufficient capacity to store all elements in Deque, then allocate a new
+// slice. Returns the resulting slice.
+//
+//	out = q.AppendTo(out)
+//
+// is an efficient shortcut for
+//
+//	for i := 0; i < q.Len(); i++ {
+//		x = append(out, q.At(i))
+//	}
+func (q *Deque[T]) AppendTo(out []T) []T {
+	if q.count == 0 {
+		return out
+	}
+
+	head, tail := q.head, q.tail
+
+	if head >= tail {
+		// [DEF....ABC]
+		out = append(out, q.buf[head:]...)
+		head = 0
+	}
+	return append(out, q.buf[head:tail]...)
+}
+
 // CopyIn replaces the contents of Deque with all the elements from the given
-// slize, in. If len(in) is zero, then this is equivalend to calling [Clear].
+// slice, in. If len(in) is zero, then this is equivalent to calling [Clear].
 //
 //	q.CopyIn(in)
 //
@@ -367,32 +393,6 @@ func (q *Deque[T]) CopyOut(out []T) int {
 	n += copy(out, q.buf[head:tail])
 
 	return n
-}
-
-// AppendTo appends from the Deque to the given slice. If the slice has
-// insufficient capacity to storr all elements in Deque, then allocate a new
-// slice. Returns the resulting slice.
-//
-//	out = q.AppendTo(out)
-//
-// is an efficient shortcut for
-//
-//	for i := 0; i < q.Len(); i++ {
-//		x = append(out, q.At(i)
-//	}
-func (q *Deque[T]) AppendTo(out []T) []T {
-	if q.count == 0 {
-		return out
-	}
-
-	head, tail := q.head, q.tail
-
-	if head >= tail {
-		// [DEF....ABC]
-		out = append(out, q.buf[head:]...)
-		head = 0
-	}
-	return append(out, q.buf[head:tail]...)
 }
 
 // Rotate rotates the deque n steps front-to-back. If n is negative, rotates
