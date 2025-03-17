@@ -303,18 +303,18 @@ func (q *Deque[T]) Grow(n int) {
 	}
 }
 
-// AppendTo appends from the Deque to the given slice. If the slice has
+// AppendToSlice appends from the Deque to the given slice. If the slice has
 // insufficient capacity to store all elements in Deque, then allocate a new
 // slice. Returns the resulting slice.
 //
-//	out = q.AppendTo(out)
+//	out = q.AppendToSlice(out)
 //
 // is an efficient shortcut for
 //
 //	for i := 0; i < q.Len(); i++ {
 //		x = append(out, q.At(i))
 //	}
-func (q *Deque[T]) AppendTo(out []T) []T {
+func (q *Deque[T]) AppendToSlice(out []T) []T {
 	if q.count == 0 {
 		return out
 	}
@@ -329,10 +329,11 @@ func (q *Deque[T]) AppendTo(out []T) []T {
 	return append(out, q.buf[head:tail]...)
 }
 
-// CopyIn replaces the contents of Deque with all the elements from the given
-// slice, in. If len(in) is zero, then this is equivalent to calling [Clear].
+// CopyInSlice replaces the contents of Deque with all the elements from the
+// given slice, in. If len(in) is zero, then this is equivalent to calling
+// [Clear].
 //
-//	q.CopyIn(in)
+//	q.CopyInSlice(in)
 //
 // is an efficient shortcut for
 //
@@ -340,7 +341,7 @@ func (q *Deque[T]) AppendTo(out []T) []T {
 //	for i := range in {
 //		q.PushBack(in[i])
 //	}
-func (q *Deque[T]) CopyIn(in []T) {
+func (q *Deque[T]) CopyInSlice(in []T) {
 	// Allocate new buffer if more space needed.
 	if len(q.buf) < len(in) {
 		newCap := len(q.buf)
@@ -361,11 +362,11 @@ func (q *Deque[T]) CopyIn(in []T) {
 	q.head = 0
 }
 
-// CopyOut copies elements from the Deque into the given slice, up to the size
-// of the buffer. Returns the number of elements copied, which will be the
+// CopyOutSlice copies elements from the Deque into the given slice, up to the
+// size of the buffer. Returns the number of elements copied, which will be the
 // minimum of q.Len() and len(out).
 //
-//	n := q.CopyOut(out)
+//	n := q.CopyOutSlice(out)
 //
 // is an efficient shortcut for
 //
@@ -373,7 +374,7 @@ func (q *Deque[T]) CopyIn(in []T) {
 //	for i := 0; i < n; i++ {
 //	 	out[i] = q.At(i)
 //	}
-func (q *Deque[T]) CopyOut(out []T) int {
+func (q *Deque[T]) CopyOutSlice(out []T) int {
 	if q.count == 0 || len(out) == 0 {
 		return 0
 	}
