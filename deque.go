@@ -353,8 +353,8 @@ func (q *Deque[T]) CopyInSlice(in []T) {
 			newCap <<= 1
 		}
 		q.buf = make([]T, newCap)
-	} else if len(q.buf) > len(in) {
-		q.Clear()
+	} else if q.count > len(in) {
+		clear(q.buf[len(in):])
 	}
 	n := copy(q.buf, in)
 	q.count = n
