@@ -229,7 +229,7 @@ func (q *Deque[T]) Iter() iter.Seq[T] {
 	}
 }
 
-// RIter returns a reversee go iterator to range over all items in the Deque,
+// RIter returns a reverse go iterator to range over all items in the Deque,
 // yielding each item from back (index Len()-1) to front (index 0).
 // Modification of Deque during iteration panics.
 func (q *Deque[T]) RIter() iter.Seq[T] {
