@@ -97,8 +97,8 @@ func (q *Deque[T]) PopFront() T {
 	return ret
 }
 
-// IterPopFront returns an iterator the iteratively removes items from the
-// Front of the deque. This is more efficient than removing items one at a time
+// IterPopFront returns an iterator that iteratively removes items from the
+// front of the deque. This is more efficient than removing items one at a time
 // because it avoids intermediate resizing. If a resize is necessary, only one
 // is done when iteration ends.
 func (q *Deque[T]) IterPopFront() iter.Seq[T] {
@@ -141,7 +141,7 @@ func (q *Deque[T]) PopBack() T {
 	return ret
 }
 
-// IterPopBack returns an iterator the iteratively removes items from the back
+// IterPopBack returns an iterator that iteratively removes items from the back
 // of the deque. This is more efficient than removing items one at a time
 // because it avoids intermediate resizing. If a resize is necessary, only one
 // is done when iteration ends.
@@ -210,20 +210,18 @@ func (q *Deque[T]) Set(i int, item T) {
 }
 
 // Iter returns a go iterator to range over all items in the Deque, yielding
-// the index of each item and the item, from front to back. Modification of
+// each item from front (index 0) to back (index Len()-1). Modification of
 // Deque during iteration panics.
-func (q *Deque[T]) Iter() iter.Seq2[int, T] {
-	return func(yield func(int, T) bool) {
-		if q.Len() == 0 {
-			return
-		}
-		count := q.count
-		head := q.head
-		for i := 0; i < count; i++ {
-			if q.count != count {
+func (q *Deque[T]) Iter() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		origHead := q.head
+		origTail := q.tail
+		head := origHead
+		for range q.Len() {
+			if q.head != origHead || q.tail != origTail {
 				panic("deque: modified during iteration")
 			}
-			if !yield(i, q.buf[head]) {
+			if !yield(q.buf[head]) {
 				return
 			}
 			head = q.next(head)
@@ -231,22 +229,20 @@ func (q *Deque[T]) Iter() iter.Seq2[int, T] {
 	}
 }
 
-// RIter returns a go iterator to range over all items in the Deque, yielding
-// the index of each item and the item, from back to front. Modification of
-// Deque during iteration panics.
-func (q *Deque[T]) RIter() iter.Seq2[int, T] {
-	return func(yield func(int, T) bool) {
-		if q.Len() == 0 {
-			return
-		}
-		count := q.count
-		tail := q.tail
-		for i := count - 1; i >= 0; i-- {
-			if q.count != count {
+// RIter returns a reversee go iterator to range over all items in the Deque,
+// yielding each item from back (index Len()-1) to front (index 0).
+// Modification of Deque during iteration panics.
+func (q *Deque[T]) RIter() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		origHead := q.head
+		origTail := q.tail
+		tail := origTail
+		for range q.Len() {
+			if q.head != origHead || q.tail != origTail {
 				panic("deque: modified during iteration")
 			}
 			tail = q.prev(tail)
-			if !yield(i, q.buf[tail]) {
+			if !yield(q.buf[tail]) {
 				return
 			}
 		}

@@ -688,24 +688,22 @@ func TestIter(t *testing.T) {
 	}
 
 	// Front to back.
-	expect := 0
-	for i, item := range q.Iter() {
-		if i != expect {
-			t.Fatalf("expected index %d, got %d", expect, i)
-		}
+	var i int
+	for item := range q.Iter() {
 		if item != i {
 			t.Errorf("index %d contains %d", i, item)
 		}
 		if i == 40 {
 			break
 		}
-		expect++
+		i++
 	}
 
 	assertPanics(t, "Iter must panic when deque modified during iteration", func() {
-		for i, _ := range q.Iter() {
-			if i == 42 {
+		for item := range q.Iter() {
+			if item == 42 {
 				q.PushBack(51)
+				q.PopFront()
 			}
 		}
 	})
@@ -723,25 +721,23 @@ func TestRIter(t *testing.T) {
 		q.PushBack(i)
 	}
 
-	// Back to fron
-	expect := 49
-	for i, item := range q.RIter() {
-		if i != expect {
-			t.Fatalf("expected index %d, got %d", expect, i)
-		}
+	// Back to front
+	i := q.Len() - 1
+	for item := range q.RIter() {
 		if item != i {
 			t.Fatalf("index %d contains %d", i, item)
 		}
 		if i == 10 {
 			break
 		}
-		expect--
+		i--
 	}
 
 	assertPanics(t, "RIter must panic when deque modified during iteration", func() {
-		for i, _ := range q.RIter() {
-			if i == 42 {
+		for item := range q.RIter() {
+			if item == 42 {
 				q.PushBack(51)
+				q.PopFront()
 			}
 		}
 	})
