@@ -303,6 +303,28 @@ func (q *Deque[T]) Grow(n int) {
 	}
 }
 
+// Copy copies the contents of the given src Deque into this Deque.
+//
+//	n := b.Copy(a)
+//
+// is an efficient shortcut for
+//
+//	b.Clear()
+//	n := a.Len()
+//	b.Grow(n)
+//	for i := 0; i < n; i++ {
+//		b.PushBack(a.At(i))
+//	}
+func (q *Deque[T]) Copy(src Deque[T]) int {
+	q.Clear()
+	q.Grow(src.Len())
+	n := src.CopyOutSlice(q.buf)
+	q.count = n
+	q.tail = n
+	q.head = 0
+	return n
+}
+
 // AppendToSlice appends from the Deque to the given slice. If the slice has
 // insufficient capacity to store all elements in Deque, then allocate a new
 // slice. Returns the resulting slice.

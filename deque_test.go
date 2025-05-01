@@ -1236,6 +1236,45 @@ func TestAppendToSlice(t *testing.T) {
 	}
 }
 
+func TestCopy(t *testing.T) {
+	var a, b Deque[int]
+
+	n := b.Copy(a)
+	if n != 0 {
+		t.Fatal("expected nothing copied")
+	}
+
+	content1 := []int{1, 2, 3}
+	a.CopyInSlice(content1)
+
+	n = b.Copy(a)
+	if n != a.Len() {
+		t.Fatal("Copy returned wrong length")
+	}
+	if !equalInt(a, b) {
+		t.Fatal("different contents after copy")
+	}
+
+	a.PopFront()
+	a.PopBack()
+	n = b.Copy(a)
+	if n != a.Len() {
+		t.Fatal("Copy returned wrong length")
+	}
+	if !equalInt(a, b) {
+		t.Fatal("different contents after copy")
+	}
+
+	a.Clear()
+	n = b.Copy(a)
+	if n != 0 {
+		t.Fatal("expected nothing copied")
+	}
+	if b.Len() != 0 {
+		t.Fatal("Destination should be empty")
+	}
+}
+
 func assertPanics(t *testing.T, name string, f func()) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -1363,4 +1402,16 @@ func BenchmarkClearSplit(b *testing.B) {
 		q.buf = slices.Clone(q.buf)
 		q.Clear()
 	}
+}
+
+func equalInt(a, b Deque[int]) bool {
+	if a.Len() != b.Len() {
+		return false
+	}
+	for i := 0; i < a.Len(); i++ {
+		if a.At(i) != b.At(i) {
+			return false
+		}
+	}
+	return true
 }
