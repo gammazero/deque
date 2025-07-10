@@ -707,6 +707,14 @@ func TestIter(t *testing.T) {
 			}
 		}
 	})
+
+	for i := 50; i < 60; i++ {
+		q.PushFront(i)
+	}
+	items := slices.Sorted(q.Iter())
+	if !slices.IsSorted(items) {
+		t.Fatal("expected sorted slice")
+	}
 }
 
 func TestRIter(t *testing.T) {
