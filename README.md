@@ -40,6 +40,8 @@ Deque uses generics to create a Deque that contains items of the type specified.
     var intDeque deque.Deque[int]
 ```
 
+Deque supports iterators that allow traversal or removal of items. When removing items this is useful to avoid intermediate resizes of the internal buffer. It also allows Deque to be used with the stdlib [`slices.Collect`](https://pkg.go.dev/slices#Collect), [`slices.Sorted`](https://pkg.go.dev/slices#Sorted), and others that take [`iter.Seq`](https://pkg.go.dev/iter#Seq) argumments.
+
 ## Example
 
 ```go
