@@ -543,3 +543,28 @@ func (q *Deque[T]) resize(newSize int) {
 	q.tail = q.count
 	q.buf = newBuf
 }
+
+// Buf returns a copy of the internal cache block.
+func (q *Deque[T]) Buf() []T {
+	if q.count == 0 {
+		return nil
+	}
+
+	result := make([]T, q.count)
+	if q.head >= q.tail {
+		var headLen int
+		if q.head != 0 {
+			head := q.buf[q.head:]
+			copy(result, head)
+
+			headLen = len(head)
+		}
+		if q.tail != 0 {
+			copy(result[headLen:], q.buf[:q.tail])
+		}
+	} else {
+		copy(result, q.buf[q.head:q.tail])
+	}
+
+	return result
+}
