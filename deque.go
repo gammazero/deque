@@ -396,6 +396,10 @@ func (q *Deque[T]) CopyInSlice(in []T) {
 //	for i := 0; i < n; i++ {
 //	 	out[i] = q.At(i)
 //	}
+//
+// This function is preferable to one that returns a copy of the internal
+// buffer because this allows reuse of memory receiving data, for repeated copy
+// operations.
 func (q *Deque[T]) CopyOutSlice(out []T) int {
 	if q.count == 0 || len(out) == 0 {
 		return 0
