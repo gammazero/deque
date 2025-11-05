@@ -87,7 +87,7 @@ func TestFrontBack(t *testing.T) {
 
 func TestGrowShrinkBack(t *testing.T) {
 	var q Deque[int]
-	size := minCapacity * 2
+	const size = minCapacity * 2
 
 	for i := 0; i < size; i++ {
 		if q.Len() != i {
@@ -117,7 +117,7 @@ func TestGrowShrinkBack(t *testing.T) {
 
 func TestGrowShrinkFront(t *testing.T) {
 	var q Deque[int]
-	size := minCapacity * 2
+	const size = minCapacity * 2
 
 	for i := 0; i < size; i++ {
 		if q.Len() != i {
@@ -286,7 +286,7 @@ func TestGrow(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	minCap := 64
+	const minCap = 64
 	q := &Deque[string]{}
 	q.SetBaseCap(minCap)
 	if q.Cap() != 0 {
@@ -848,7 +848,7 @@ func TestIterPopBack(t *testing.T) {
 func TestIterPopFront(t *testing.T) {
 	const (
 		baseCap = 32
-		size    = baseCap + 5
+		size    = baseCap * 5
 	)
 	var q Deque[int]
 	q.SetBaseCap(baseCap)
