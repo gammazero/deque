@@ -87,7 +87,7 @@ func TestFrontBack(t *testing.T) {
 
 func TestGrowShrinkBack(t *testing.T) {
 	var q Deque[int]
-	size := minCapacity * 2
+	const size = minCapacity * 2
 
 	for i := 0; i < size; i++ {
 		if q.Len() != i {
@@ -117,7 +117,7 @@ func TestGrowShrinkBack(t *testing.T) {
 
 func TestGrowShrinkFront(t *testing.T) {
 	var q Deque[int]
-	size := minCapacity * 2
+	const size = minCapacity * 2
 
 	for i := 0; i < size; i++ {
 		if q.Len() != i {
@@ -286,7 +286,7 @@ func TestGrow(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	minCap := 64
+	const minCap = 64
 	q := &Deque[string]{}
 	q.SetBaseCap(minCap)
 	if q.Cap() != 0 {
@@ -752,8 +752,16 @@ func TestRIter(t *testing.T) {
 }
 
 func TestIterPopBack(t *testing.T) {
+	const (
+		baseCap = 32
+		size    = baseCap * 5
+	)
 	var q Deque[int]
-	size := minCapacity * 5
+	q.SetBaseCap(baseCap)
+
+	for i := range q.IterPopBack() {
+		t.Fatalf("popped %d when nothig to pop", i)
+	}
 
 	q.Grow(size)
 	for i := 0; i < size; i++ {
@@ -778,6 +786,9 @@ func TestIterPopBack(t *testing.T) {
 	}
 	if q.Len() != 0 {
 		t.Error("q.Len() =", q.Len(), "expected 0")
+	}
+	if q.Cap() != baseCap {
+		t.Error("capacity should return to configured base capacity")
 	}
 
 	q.Grow(size)
@@ -835,8 +846,12 @@ func TestIterPopBack(t *testing.T) {
 }
 
 func TestIterPopFront(t *testing.T) {
+	const (
+		baseCap = 32
+		size    = baseCap * 5
+	)
 	var q Deque[int]
-	size := minCapacity * 5
+	q.SetBaseCap(baseCap)
 
 	q.Grow(size)
 	for i := 0; i < size; i++ {
@@ -860,6 +875,10 @@ func TestIterPopFront(t *testing.T) {
 	if q.Len() != 0 {
 		t.Error("q.Len() =", q.Len(), "expected 0")
 	}
+	if q.Cap() != baseCap {
+		t.Error("capacity should return to configured base capacity")
+	}
+
 	for range q.IterPopFront() {
 		t.Fatal("iteration with 0 items")
 	}
