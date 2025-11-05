@@ -1065,6 +1065,216 @@ func TestSetMBaseapacity(t *testing.T) {
 	}
 }
 
+func TestCopyInSliceCopyOutSlice(t *testing.T) {
+	var q Deque[int]
+
+	out := make([]int, 5)
+	n := q.CopyOutSlice(out)
+	if n != 0 {
+		t.Fatal("expected nothing replaced")
+	}
+	content1 := []int{1, 2, 3}
+	q.CopyInSlice(content1)
+	if q.Front() != 1 {
+		t.Fatal("wrong value for Fromt")
+	}
+	if q.Back() != 3 {
+		t.Fatal("wrong value for Back")
+	}
+
+	n = q.CopyOutSlice(out)
+	if !slices.Equal(content1, out[:n]) {
+		t.Fatal("did not get expected previous content, got:", out[:n])
+	}
+	content2 := []int{4, 5}
+	q.CopyInSlice(content2)
+	if q.Len() != len(content2) {
+		t.Fatalf("q should have %d items", len(content2))
+	}
+	for i, v := range content2 {
+		if q.At(i) != v {
+			t.Fatal("unexpected content after replace")
+		}
+	}
+
+	n = q.CopyOutSlice(out)
+	if !slices.Equal(content2, out[:n]) {
+		t.Fatal("did not get expected previous content, got:", out[:n])
+	}
+	content3 := []int{6, 7, 8, 9, 10, 11, 12}
+	q.CopyInSlice(content3)
+	if q.Len() != len(content3) {
+		t.Fatalf("q should have %d items", len(content3))
+	}
+	for i, v := range content3 {
+		if q.At(i) != v {
+			t.Fatal("unexpected content after replace")
+		}
+	}
+
+	n = q.CopyOutSlice(out)
+	if n != len(out) {
+		t.Fatalf("expected %d replaced items", len(out))
+	}
+	if !slices.Equal(content3[:n], out) {
+		t.Fatal("did not get expected previous content, got:", out)
+	}
+	q.CopyInSlice(nil)
+	if q.Len() != 0 {
+		t.Fatal("q should have 0 items")
+	}
+
+	n = q.CopyOutSlice(out)
+	if n != 0 {
+		t.Fatal("expected 0 replaced items")
+	}
+	content4 := []int{13, 14}
+	q.CopyInSlice(content4)
+	if q.Len() != len(content4) {
+		t.Fatalf("q should have %d items", len(content4))
+	}
+
+	n = q.CopyOutSlice(nil)
+	if n != 0 {
+		t.Fatal("expected 0 replaced items")
+	}
+	if q.Len() != len(content4) {
+		t.Fatalf("q should have %d items", len(content4))
+	}
+
+	q.Clear()
+	cap := q.Cap()
+	content5 := make([]int, 0, cap+cap/2)
+	for i := 0; i < cap; i++ {
+		q.PushBack(i)
+		content5 = append(content5, 200)
+	}
+	for i := 0; i < cap/2; i++ {
+		q.PopFront()
+		q.PushBack(i + 100)
+		content5 = append(content5, 200)
+	}
+
+	buf := make([]int, q.Len()*2)
+	n = q.CopyOutSlice(buf)
+	if buf[0] != q.Front() {
+		t.Fatal("wrong first element in output")
+	}
+	if buf[n-1] != q.At(n-1) {
+		t.Fatal("wrong last element in output")
+	}
+
+	first := q.Front()
+	last := q.At(len(out) - 1)
+	n = q.CopyOutSlice(out)
+	if n != len(out) {
+		t.Fatalf("expected %d replaced items", len(out))
+	}
+	if out[0] != first {
+		t.Fatalf("expected previous[0] to be %d, got %d", first, out[0])
+	}
+	if out[len(out)-1] != last {
+		t.Fatalf("expected last previous to be %d, got %d", last, out[len(out)-1])
+	}
+
+	q.CopyInSlice(content5)
+	if q.Len() != len(content5) {
+		t.Fatalf("q should have %d items", len(content5))
+	}
+	for i, v := range content5 {
+		if q.At(i) != v {
+			t.Fatal("unexpected content after replace")
+		}
+	}
+}
+
+func TestAppendToSlice(t *testing.T) {
+	var q Deque[int]
+	content := []int{1, 2, 3}
+	q.CopyInSlice(content)
+
+	out := q.AppendToSlice(nil)
+	if !slices.Equal(content, out) {
+		t.Fatal("did not get expected content")
+	}
+
+	out = q.AppendToSlice(out)
+	if len(out) != 2*len(content) {
+		t.Fatal("worng output length")
+	}
+	if !slices.Equal(content, out[:len(content)]) {
+		t.Fatal("did not get expected content at start of out")
+	}
+	if !slices.Equal(content, out[len(content):]) {
+		t.Fatal("did not get expected content at end of out")
+	}
+
+	q.Clear()
+	for i := 0; i < q.Cap(); i++ {
+		q.PushBack(i)
+	}
+	for i := 0; i < q.Cap()/2; i++ {
+		q.PopFront()
+		q.PushBack(i + 100)
+	}
+
+	out = q.AppendToSlice(out[:0])
+	if len(out) != q.Len() {
+		t.Fatal("wrong output length")
+	}
+	if out[0] != q.Front() {
+		t.Fatal("worng first element")
+	}
+	if out[len(out)-1] != q.Back() {
+		t.Fatal("worng last element")
+	}
+
+	q.Clear()
+	newOut := q.AppendToSlice(out)
+	if !slices.Equal(out, newOut) {
+		t.Fatal("expected same slice returned")
+	}
+}
+
+func TestCopy(t *testing.T) {
+	var a, b Deque[int]
+
+	n := b.Copy(a)
+	if n != 0 {
+		t.Fatal("expected nothing copied")
+	}
+
+	content1 := []int{1, 2, 3}
+	a.CopyInSlice(content1)
+
+	n = b.Copy(a)
+	if n != a.Len() {
+		t.Fatal("Copy returned wrong length")
+	}
+	if !equalInt(a, b) {
+		t.Fatal("different contents after copy")
+	}
+
+	a.PopFront()
+	a.PopBack()
+	n = b.Copy(a)
+	if n != a.Len() {
+		t.Fatal("Copy returned wrong length")
+	}
+	if !equalInt(a, b) {
+		t.Fatal("different contents after copy")
+	}
+
+	a.Clear()
+	n = b.Copy(a)
+	if n != 0 {
+		t.Fatal("expected nothing copied")
+	}
+	if b.Len() != 0 {
+		t.Fatal("Destination should be empty")
+	}
+}
+
 func assertPanics(t *testing.T, name string, f func()) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -1192,4 +1402,16 @@ func BenchmarkClearSplit(b *testing.B) {
 		q.buf = slices.Clone(q.buf)
 		q.Clear()
 	}
+}
+
+func equalInt(a, b Deque[int]) bool {
+	if a.Len() != b.Len() {
+		return false
+	}
+	for i := 0; i < a.Len(); i++ {
+		if a.At(i) != b.At(i) {
+			return false
+		}
+	}
+	return true
 }
