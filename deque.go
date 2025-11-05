@@ -515,11 +515,11 @@ func (q *Deque[T]) shrinkToFit() {
 		if q.count == 0 {
 			q.head = 0
 			q.tail = 0
-			q.buf = make([]T, minCapacity)
+			q.buf = make([]T, q.minCap)
 			return
 		}
 
-		c := minCapacity
+		c := q.minCap
 		for c < q.count {
 			c <<= 1
 		}
