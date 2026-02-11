@@ -660,6 +660,6 @@ func (q *Deque[T]) resize(newSize int) {
 	}
 
 	q.head = 0
-	q.tail = q.count
+	q.tail = q.count & (newSize - 1) // bitwise modulus, in case buffer is exactly full
 	q.buf = newBuf
 }

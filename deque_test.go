@@ -1303,6 +1303,34 @@ func TestCopyInSlicePanic(t *testing.T) {
 	q.PushBack(17)
 }
 
+func TestShrinkToFitPanic(t *testing.T) {
+	var q Deque[int]
+	for range 33 {
+		q.PushBack(0)
+	}
+	i := 0
+	for range q.IterPopFront() {
+		i++
+		if i == 17 {
+			break
+		}
+	}
+	q.PopFront()
+	q.PushBack(0)
+}
+
+func TestPopFrontPanic(t *testing.T) {
+	var q Deque[int]
+	for range 33 {
+		q.PushBack(0)
+	}
+	for i := 0; i < 17; i++ {
+		q.PopFront()
+	}
+	q.PopFront()
+	q.PushBack(0)
+}
+
 func assertPanics(t *testing.T, name string, f func()) {
 	defer func() {
 		if r := recover(); r == nil {
