@@ -320,7 +320,7 @@ func (q *Deque[T]) Copy(src Deque[T]) int {
 	q.Grow(src.Len())
 	n := src.CopyOutSlice(q.buf)
 	q.count = n
-	q.tail = n
+	q.tail = n & (len(q.buf) - 1) // bitwise modulus
 	q.head = 0
 	return n
 }
@@ -380,7 +380,7 @@ func (q *Deque[T]) CopyInSlice(in []T) {
 	}
 	n := copy(q.buf, in)
 	q.count = n
-	q.tail = n
+	q.tail = n & (len(q.buf) - 1) // bitwise modulus
 	q.head = 0
 }
 

@@ -1275,6 +1275,34 @@ func TestCopy(t *testing.T) {
 	}
 }
 
+func TestClearAndPushBack(t *testing.T) {
+	q := &Deque[int]{}
+	in := make([]int, minCapacity)
+	q.Clear()
+	for i := range in {
+		q.PushBack(in[i])
+	}
+	q.PopFront()
+	q.PushBack(17)
+}
+
+func TestCopyPanic(t *testing.T) {
+	var q1, q2 Deque[int]
+	in := make([]int, minCapacity)
+	q1.CopyInSlice(in)
+	q2.Copy(q1)
+	q2.PopFront()
+	q2.PushBack(17)
+}
+
+func TestCopyInSlicePanic(t *testing.T) {
+	var q Deque[int]
+	in := make([]int, minCapacity)
+	q.CopyInSlice(in)
+	q.PopFront()
+	q.PushBack(17)
+}
+
 func assertPanics(t *testing.T, name string, f func()) {
 	defer func() {
 		if r := recover(); r == nil {
