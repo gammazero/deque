@@ -322,9 +322,9 @@ func checkRotate(t *testing.T, size int) {
 		q.PushBack(i)
 	}
 
-	for i := 0; i < q.Len(); i++ {
+	for i := range q.Len() {
 		x := i
-		for n := 0; n < q.Len(); n++ {
+		for n := range q.Len() {
 			if q.At(n) != x {
 				t.Fatalf("a[%d] != %d after rotate and copy", n, x)
 			}
@@ -414,7 +414,18 @@ func TestSet(t *testing.T) {
 }
 
 func TestClear(t *testing.T) {
+	var nilDeque *Deque[int]
+	nilDeque.Clear()
+
 	var q Deque[int]
+
+	q.PushBack(1)
+	q.PopFront()
+	before := q.head
+	q.Clear()
+	if q.head != before {
+		t.Error("clearing empty deque should have done nothing")
+	}
 
 	for i := range 100 {
 		q.PushBack(i)
@@ -909,6 +920,7 @@ func TestIterPopFront(t *testing.T) {
 			break
 		}
 	}
+
 	for range q.IterPopFront() {
 		if q.Len() == 32 {
 			break
@@ -916,6 +928,20 @@ func TestIterPopFront(t *testing.T) {
 	}
 	if q.Cap() == c {
 		t.Fatal("expected capacity change")
+	}
+
+	// Force resizing up from min capacity to meet storage needs for resize.
+	q.SetBaseCap(16)
+	for i := range 65 {
+		q.PushBack(i)
+	}
+	for range q.IterPopFront() {
+		if q.Len() == 17 {
+			break
+		}
+	}
+	if q.Cap() != 32 {
+		t.Fatal("expected capacity to be 32 (next 2^n above q.Len())")
 	}
 }
 
