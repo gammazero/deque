@@ -2,7 +2,6 @@
 
 [![GoDoc](https://pkg.go.dev/badge/github.com/gammazero/deque)](https://pkg.go.dev/github.com/gammazero/deque)
 [![Build Status](https://github.com/gammazero/deque/actions/workflows/go.yml/badge.svg)](https://github.com/gammazero/deque/actions/workflows/go.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gammazero/deque)](https://goreportcard.com/report/github.com/gammazero/deque)
 [![codecov](https://codecov.io/gh/gammazero/deque/graph/badge.svg?token=LGS6XRID3D)](https://codecov.io/gh/gammazero/deque)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
