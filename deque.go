@@ -287,7 +287,11 @@ func (q *Deque[T]) Grow(n int) {
 	}
 
 	if c == 0 {
-		c = minCapacity
+		// First allocation must honor the base capacity, as growIfFull does.
+		if q.minCap == 0 {
+			q.minCap = minCapacity
+		}
+		c = q.minCap
 	}
 
 	newLen := l + n
@@ -368,8 +372,11 @@ func (q *Deque[T]) CopyInSlice(in []T) {
 	if len(q.buf) < len(in) {
 		newCap := len(q.buf)
 		if newCap == 0 {
-			newCap = minCapacity
-			q.minCap = minCapacity
+			// First allocation must honor the base capacity, as growIfFull does.
+			if q.minCap == 0 {
+				q.minCap = minCapacity
+			}
+			newCap = q.minCap
 		}
 		for newCap < len(in) {
 			newCap <<= 1

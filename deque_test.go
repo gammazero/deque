@@ -285,6 +285,55 @@ func TestGrow(t *testing.T) {
 	}
 }
 
+func TestBaseCapFirstAllocation(t *testing.T) {
+	t.Run("Grow", func(t *testing.T) {
+		q := new(Deque[int])
+		q.Grow(1)
+		for i := 0; i < 5; i++ {
+			q.PushBack(i)
+		}
+		q.PopFront()
+		if q.Cap() < minCapacity {
+			t.Fatalf("Cap() should not go below %d, got %d", minCapacity, q.Cap())
+		}
+	})
+
+	t.Run("Grow with base capacity", func(t *testing.T) {
+		const baseCap = 1024
+		q := new(Deque[int])
+		q.SetBaseCap(baseCap)
+		q.Grow(1)
+		if q.Cap() != baseCap {
+			t.Fatalf("Cap() should return %d, got %d", baseCap, q.Cap())
+		}
+	})
+
+	t.Run("CopyInSlice", func(t *testing.T) {
+		const baseCap = 1024
+		q := new(Deque[int])
+		q.SetBaseCap(baseCap)
+		q.CopyInSlice([]int{1, 2, 3})
+		// CopyInSlice documents itself as a shortcut for Clear plus PushBack.
+		if q.Cap() != baseCap {
+			t.Fatalf("Cap() should return %d, got %d", baseCap, q.Cap())
+		}
+	})
+
+	t.Run("Copy", func(t *testing.T) {
+		const baseCap = 1024
+		src := new(Deque[int])
+		for i := 0; i < 3; i++ {
+			src.PushBack(i)
+		}
+		q := new(Deque[int])
+		q.SetBaseCap(baseCap)
+		q.Copy(*src)
+		if q.Cap() != baseCap {
+			t.Fatalf("Cap() should return %d, got %d", baseCap, q.Cap())
+		}
+	})
+}
+
 func TestNew(t *testing.T) {
 	const minCap = 64
 	q := &Deque[string]{}
