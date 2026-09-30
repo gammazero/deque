@@ -320,6 +320,10 @@ func (q *Deque[T]) Grow(n int) {
 //		b.PushBack(a.At(i))
 //	}
 func (q *Deque[T]) Copy(src Deque[T]) int {
+	if len(q.buf) != 0 && len(src.buf) != 0 && &q.buf[0] == &src.buf[0] {
+		// Detach the destination before Clear can erase the source's elements.
+		q.buf = make([]T, len(q.buf))
+	}
 	q.Clear()
 	q.Grow(src.Len())
 	n := src.CopyOutSlice(q.buf)

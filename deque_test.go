@@ -1546,3 +1546,22 @@ func equalInt(a, b Deque[int]) bool {
 	}
 	return true
 }
+
+func TestCopySelf(t *testing.T) {
+	for _, size := range []int{0, 1, 10, 16, 20} {
+		var q Deque[int]
+		for i := 1; i <= size; i++ {
+			q.PushBack(i)
+		}
+		q.Rotate(3)
+		want := q.AppendToSlice(nil)
+		if n := q.Copy(q); n != size {
+			t.Fatalf("Copy returned %d, want %d", n, size)
+		}
+		for i, value := range want {
+			if got := q.At(i); got != value {
+				t.Fatalf("size %d, index %d: got %d, want %d", size, i, got, value)
+			}
+		}
+	}
+}
