@@ -2,6 +2,8 @@ package deque
 
 import (
 	"fmt"
+	"math"
+	"math/bits"
 	"slices"
 	"testing"
 	"unicode"
@@ -1137,6 +1139,48 @@ func TestSetMBaseapacity(t *testing.T) {
 	q.SetBaseCap(0)
 	if q.minCap != minCapacity {
 		t.Fatal("wrong minimum capacity")
+	}
+}
+
+func TestCapacityOutOfRangePanics(t *testing.T) {
+	t.Run("SetBaseCap", func(t *testing.T) {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("SetBaseCap past the largest power of two should panic")
+			}
+		}()
+		var q Deque[int]
+		q.SetBaseCap(math.MaxInt)
+	})
+
+	t.Run("Grow", func(t *testing.T) {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("Grow past the largest power of two should panic")
+			}
+		}()
+		var q Deque[int]
+		q.Grow(math.MaxInt)
+	})
+
+	t.Run("GrowSum", func(t *testing.T) {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("Grow that overflows the length should panic")
+			}
+		}()
+		var q Deque[int]
+		for range 8 {
+			q.PushBack(1)
+		}
+		q.Grow(math.MaxInt - 4)
+	})
+
+	var q Deque[int]
+	maxPow := 1 << (bits.UintSize - 2)
+	q.SetBaseCap(maxPow)
+	if q.minCap != maxPow {
+		t.Fatalf("minCap = %d, want %d", q.minCap, maxPow)
 	}
 }
 

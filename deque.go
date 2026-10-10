@@ -295,9 +295,10 @@ func (q *Deque[T]) Grow(n int) {
 	}
 
 	newLen := l + n
-	for c < newLen {
-		c <<= 1
+	if newLen < l {
+		panic("deque.Grow: capacity out of range")
 	}
+	c = nextPow2(c, newLen)
 	if l == 0 {
 		q.buf = make([]T, c)
 		q.head = 0
@@ -378,9 +379,7 @@ func (q *Deque[T]) CopyInSlice(in []T) {
 			}
 			newCap = q.minCap
 		}
-		for newCap < len(in) {
-			newCap <<= 1
-		}
+		newCap = nextPow2(newCap, len(in))
 		q.buf = make([]T, newCap)
 	} else if len(q.buf) > len(in) {
 		q.Clear()
@@ -578,11 +577,25 @@ func (q *Deque[T]) Remove(at int) T {
 // SetBaseCap sets a base capacity so that at least the specified number of
 // items can always be stored without resizing.
 func (q *Deque[T]) SetBaseCap(baseCap int) {
-	minCap := minCapacity
-	for minCap < baseCap {
-		minCap <<= 1
+	q.minCap = nextPow2(minCapacity, baseCap)
+}
+
+// nextPow2 returns the smallest power of two that is at least n and at least
+// start. start must be a positive power of two. A target past the largest
+// positive power of two used to wrap the shift and spin forever.
+func nextPow2(start, n int) int {
+	c := start
+	if n <= c {
+		return c
 	}
-	q.minCap = minCap
+	for c < n {
+		next := c << 1
+		if next <= 0 {
+			panic("deque: capacity out of range")
+		}
+		c = next
+	}
+	return c
 }
 
 // Swap exchanges the two values at idxA and idxB. It panics if either index is
