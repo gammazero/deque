@@ -2,6 +2,8 @@ package deque
 
 import (
 	"fmt"
+	"math"
+	"math/bits"
 	"slices"
 	"testing"
 	"unicode"
@@ -143,6 +145,41 @@ func TestGrowShrinkFront(t *testing.T) {
 	if len(q.buf) == bufLen {
 		t.Error("queue buffer did not shrink")
 	}
+}
+
+func TestCapacityOutOfRangePanics(t *testing.T) {
+	t.Run("SetBaseCap", func(t *testing.T) {
+		var q Deque[int]
+		assertPanics(t, "SetBaseCap past the largest power of two should panic", func() {
+			q.SetBaseCap(math.MaxInt)
+		})
+	})
+
+	t.Run("Grow", func(t *testing.T) {
+		var q Deque[int]
+		assertPanics(t, "Grow past the largest power of two should panic", func() {
+			q.Grow(math.MaxInt)
+		})
+	})
+
+	t.Run("Grow past limit", func(t *testing.T) {
+		var q Deque[int]
+		for range 17 {
+			q.PushBack(1)
+		}
+		assertPanics(t, "Grow that overflows the length should panic", func() {
+			q.Grow(math.MaxInt - 4)
+		})
+	})
+
+	t.Run("SetBaseCap to maximum", func(t *testing.T) {
+		var q Deque[int]
+		maxPow := 1 << (bits.UintSize - 2)
+		q.SetBaseCap(maxPow)
+		if q.minCap != maxPow {
+			t.Fatalf("minCap = %d, want %d", q.minCap, maxPow)
+		}
+	})
 }
 
 func TestSimple(t *testing.T) {
