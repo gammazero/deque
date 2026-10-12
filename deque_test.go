@@ -289,7 +289,7 @@ func TestBaseCapFirstAllocation(t *testing.T) {
 	t.Run("Grow", func(t *testing.T) {
 		q := new(Deque[int])
 		q.Grow(1)
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			q.PushBack(i)
 		}
 		q.PopFront()
@@ -322,7 +322,7 @@ func TestBaseCapFirstAllocation(t *testing.T) {
 	t.Run("Copy", func(t *testing.T) {
 		const baseCap = 1024
 		src := new(Deque[int])
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			src.PushBack(i)
 		}
 		q := new(Deque[int])
@@ -1418,7 +1418,7 @@ func TestPopFrontPanic(t *testing.T) {
 	for range 33 {
 		q.PushBack(0)
 	}
-	for i := 0; i < 17; i++ {
+	for range 17 {
 		q.PopFront()
 	}
 	q.PopFront()
