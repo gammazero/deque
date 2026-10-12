@@ -3,6 +3,7 @@ package deque
 import (
 	"fmt"
 	"iter"
+	"unsafe"
 )
 
 // minCapacity is the smallest capacity that deque may have. Must be power of 2
@@ -320,6 +321,9 @@ func (q *Deque[T]) Grow(n int) {
 //		b.PushBack(a.At(i))
 //	}
 func (q *Deque[T]) Copy(src Deque[T]) int {
+	if unsafe.SliceData(q.buf) == unsafe.SliceData(src.buf) {
+		return q.Len()
+	}
 	q.Clear()
 	q.Grow(src.Len())
 	n := src.CopyOutSlice(q.buf)

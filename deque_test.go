@@ -1350,6 +1350,25 @@ func TestCopy(t *testing.T) {
 	}
 }
 
+func TestCopySelf(t *testing.T) {
+	for _, size := range []int{0, 1, 10, 16, 20, 33, 7} {
+		var q Deque[int]
+		for i := range size {
+			q.PushBack(i)
+		}
+		q.Rotate(3)
+		want := q.AppendToSlice(nil)
+		if n := q.Copy(q); n != size {
+			t.Fatalf("Copy returned %d, want %d", n, size)
+		}
+		for i, value := range want {
+			if q.At(i) != value {
+				t.Fatalf("size %d, index %d: got %d, want %d", size, i, q.At(i), value)
+			}
+		}
+	}
+}
+
 func TestClearAndPushBack(t *testing.T) {
 	q := &Deque[int]{}
 	in := make([]int, minCapacity)
