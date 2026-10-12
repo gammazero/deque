@@ -3,6 +3,7 @@ package deque
 import (
 	"fmt"
 	"iter"
+	"math/bits"
 	"unsafe"
 )
 
@@ -278,7 +279,7 @@ func (q *Deque[T]) Clear() {
 // another allocation. If n is negative, Grow panics.
 func (q *Deque[T]) Grow(n int) {
 	if n < 0 {
-		panic("deque.Grow: negative count")
+		panic("deque: cannot grow with negative count")
 	}
 	c := q.Cap()
 	l := q.Len()
@@ -296,9 +297,10 @@ func (q *Deque[T]) Grow(n int) {
 	}
 
 	newLen := l + n
-	for c < newLen {
-		c <<= 1
+	if newLen < l {
+		panic("deque: capacity out of range")
 	}
+	c = nextPower2(c, newLen)
 	if l == 0 {
 		q.buf = make([]T, c)
 		q.head = 0
@@ -382,9 +384,7 @@ func (q *Deque[T]) CopyInSlice(in []T) {
 			}
 			newCap = q.minCap
 		}
-		for newCap < len(in) {
-			newCap <<= 1
-		}
+		newCap = nextPower2(newCap, len(in))
 		q.buf = make([]T, newCap)
 	} else if len(q.buf) > len(in) {
 		q.Clear()
@@ -582,11 +582,7 @@ func (q *Deque[T]) Remove(at int) T {
 // SetBaseCap sets a base capacity so that at least the specified number of
 // items can always be stored without resizing.
 func (q *Deque[T]) SetBaseCap(baseCap int) {
-	minCap := minCapacity
-	for minCap < baseCap {
-		minCap <<= 1
-	}
-	q.minCap = minCap
+	q.minCap = nextPower2(minCapacity, baseCap)
 }
 
 // Swap exchanges the two values at idxA and idxB. It panics if either index is
@@ -607,6 +603,19 @@ func (q *Deque[T]) checkRange(i int) {
 	if i < 0 || i >= q.count {
 		panic(fmt.Sprintf("deque: index out of range %d with length %d", i, q.Len()))
 	}
+}
+
+func nextPower2(c, n int) int {
+	// maxPower2 is the maximum power of two that a buffer size can grow to.
+	const maxPower2 = 1 << (bits.UintSize - 2)
+
+	if n > maxPower2 {
+		panic("deque: capacity out of range")
+	}
+	for c < n {
+		c <<= 1
+	}
+	return c
 }
 
 // prev returns the previous buffer position wrapping around buffer.
