@@ -253,7 +253,7 @@ func TestBack(t *testing.T) {
 
 func TestGrow(t *testing.T) {
 	var q Deque[int]
-	assertPanics(t, "should panic when calling Groe with invalid size", func() {
+	assertPanics(t, "should panic when calling Grow with invalid size", func() {
 		q.Grow(-1)
 	})
 
@@ -339,7 +339,7 @@ func TestNew(t *testing.T) {
 	q := &Deque[string]{}
 	q.SetBaseCap(minCap)
 	if q.Cap() != 0 {
-		t.Fatal("should not have allowcated mem yet")
+		t.Fatal("should not have allocated memory yet")
 	}
 	q.PushBack("foo")
 	q.PopFront()
@@ -347,7 +347,7 @@ func TestNew(t *testing.T) {
 		t.Fatal("Len() should return 0")
 	}
 	if q.Cap() != minCap {
-		t.Fatalf("worng capactiy expected %d, got %d", minCap, q.Cap())
+		t.Fatalf("wrong capacity expected %d, got %d", minCap, q.Cap())
 	}
 	curCap := 128
 	q = new(Deque[string])
@@ -820,7 +820,7 @@ func TestIterPopBack(t *testing.T) {
 	q.SetBaseCap(baseCap)
 
 	for i := range q.IterPopBack() {
-		t.Fatalf("popped %d when nothig to pop", i)
+		t.Fatalf("popped %d when nothing to pop", i)
 	}
 
 	q.Grow(size)
@@ -1151,7 +1151,7 @@ func TestCopyInSliceCopyOutSlice(t *testing.T) {
 	content1 := []int{1, 2, 3}
 	q.CopyInSlice(content1)
 	if q.Front() != 1 {
-		t.Fatal("wrong value for Fromt")
+		t.Fatal("wrong value for Front")
 	}
 	if q.Back() != 3 {
 		t.Fatal("wrong value for Back")
@@ -1426,7 +1426,9 @@ func TestPopFrontPanic(t *testing.T) {
 }
 
 func assertPanics(t *testing.T, name string, f func()) {
+	t.Helper()
 	defer func() {
+		t.Helper()
 		if r := recover(); r == nil {
 			t.Errorf("%s: didn't panic as expected", name)
 		}
