@@ -42,3 +42,32 @@ func TestIteratorDetectsClear(t *testing.T) {
 		}
 	}
 }
+
+func TestIterNil(t *testing.T) {
+	var q *Deque[int]
+	for range q.Iter() {
+		t.Fatal("Iter yielded from nil deque")
+	}
+	for range q.RIter() {
+		t.Fatal("RIter yielded from nil deque")
+	}
+}
+
+func TestIterModifyAfterBreak(t *testing.T) {
+	var q Deque[int]
+	for i := range 8 {
+		q.PushBack(i)
+	}
+
+	for range q.Iter() {
+		q.PushBack(0)
+		break
+	}
+	for range q.RIter() {
+		q.PushBack(0)
+		break
+	}
+	if q.Len() != 10 {
+		t.Fatalf("expected length 10, got %d", q.Len())
+	}
+}

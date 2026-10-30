@@ -217,6 +217,9 @@ func (q *Deque[T]) Set(i int, item T) {
 // Deque during iteration panics.
 func (q *Deque[T]) Iter() iter.Seq[T] {
 	return func(yield func(T) bool) {
+		if q.Len() == 0 {
+			return
+		}
 		origHead := q.head
 		origTail := q.tail
 		origCount := q.count
@@ -238,6 +241,9 @@ func (q *Deque[T]) Iter() iter.Seq[T] {
 // Modification of Deque during iteration panics.
 func (q *Deque[T]) RIter() iter.Seq[T] {
 	return func(yield func(T) bool) {
+		if q.Len() == 0 {
+			return
+		}
 		origHead := q.head
 		origTail := q.tail
 		origCount := q.count
