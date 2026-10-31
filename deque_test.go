@@ -2,6 +2,7 @@ package deque
 
 import (
 	"fmt"
+	"iter"
 	"math"
 	"math/bits"
 	"slices"
@@ -846,6 +847,276 @@ func TestRIter(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestIterDetectsModification(t *testing.T) {
+	const size = 8
+
+	mutations := []struct {
+		name   string
+		mutate func(q *Deque[int])
+	}{
+		{"Clear", func(q *Deque[int]) { q.Clear() }},
+		{"PushBack", func(q *Deque[int]) { q.PushBack(0) }},
+		{"PushFront", func(q *Deque[int]) { q.PushFront(0) }},
+		{"PopFront", func(q *Deque[int]) { q.PopFront() }},
+		{"PopBack", func(q *Deque[int]) { q.PopBack() }},
+		{"Insert", func(q *Deque[int]) { q.Insert(1, 0) }},
+		{"Remove", func(q *Deque[int]) { q.Remove(1) }},
+		{"Rotate", func(q *Deque[int]) { q.Rotate(1) }},
+		{"CopyInSlice", func(q *Deque[int]) {
+			q.CopyInSlice(make([]int, size-1))
+		}},
+		{"Copy", func(q *Deque[int]) {
+			var src Deque[int]
+			src.CopyInSlice(make([]int, size-1))
+			q.Copy(src)
+		}},
+		{"IterPopFront", func(q *Deque[int]) {
+			for range q.IterPopFront() {
+				break
+			}
+		}},
+		{"IterPopBack", func(q *Deque[int]) {
+			for range q.IterPopBack() {
+				break
+			}
+		}},
+	}
+	iters := []struct {
+		name string
+		seq  func(q *Deque[int]) iter.Seq[int]
+	}{
+		{"Iter", (*Deque[int]).Iter},
+		{"RIter", (*Deque[int]).RIter},
+	}
+
+	for _, it := range iters {
+		for _, m := range mutations {
+			t.Run(it.name+"/"+m.name, func(t *testing.T) {
+				var q Deque[int]
+				for i := range size {
+					q.PushBack(i)
+				}
+				seen := 0
+				assertPanics(t, "must detect modification", func() {
+					for range it.seq(&q) {
+						seen++
+						if seen == 1 {
+							m.mutate(&q)
+						}
+					}
+				})
+				if seen != 1 {
+					t.Fatalf("yielded %d items, want 1", seen)
+				}
+			})
+
+			// No item is read after the last one, so a change made while
+			// handling it does not panic.
+			t.Run(it.name+"/last/"+m.name, func(t *testing.T) {
+				var q Deque[int]
+				for i := range size {
+					q.PushBack(i)
+				}
+				seen := 0
+				for range it.seq(&q) {
+					seen++
+					if seen == size {
+						m.mutate(&q)
+					}
+				}
+				if seen != size {
+					t.Fatalf("yielded %d items, want %d", seen, size)
+				}
+			})
+		}
+	}
+}
+
+func TestIterDetectsClearFull(t *testing.T) {
+	// A full deque with head at 0 has head == tail == 0, the same as after
+	// Clear, so head and tail alone cannot tell them apart.
+	for _, size := range []int{16, 32} {
+		var q Deque[int]
+		for i := range size {
+			q.PushBack(i)
+		}
+		assertPanics(t, "Iter must detect Clear", func() {
+			for range q.Iter() {
+				q.Clear()
+			}
+		})
+
+		q = Deque[int]{}
+		for i := range size {
+			q.PushBack(i)
+		}
+		assertPanics(t, "RIter must detect Clear", func() {
+			for range q.RIter() {
+				q.Clear()
+			}
+		})
+	}
+}
+
+func TestIterSingleItemClear(t *testing.T) {
+	var q Deque[int]
+	q.PushBack(1)
+	for range q.Iter() {
+		q.Clear()
+	}
+	if q.Len() != 0 {
+		t.Fatalf("expected empty deque, got length %d", q.Len())
+	}
+
+	q.PushBack(1)
+	for range q.RIter() {
+		q.Clear()
+	}
+	if q.Len() != 0 {
+		t.Fatalf("expected empty deque, got length %d", q.Len())
+	}
+}
+
+func TestIterAllowsReplacingItems(t *testing.T) {
+	var q Deque[int]
+	for i := range 8 {
+		q.PushBack(i)
+	}
+
+	// Set and Swap do not change which positions hold items, so they are
+	// safe during iteration, and visited items see the updated values.
+	i := 0
+	for range q.Iter() {
+		q.Set(i, 100+i)
+		i++
+	}
+	for i := range q.Len() {
+		if q.At(i) != 100+i {
+			t.Fatalf("index %d contains %d", i, q.At(i))
+		}
+	}
+
+	var last int
+	for item := range q.RIter() {
+		q.Swap(0, q.Len()-1)
+		last = item
+	}
+	if last == 0 {
+		t.Fatal("RIter did not yield items")
+	}
+}
+
+func TestIterAllowsSameState(t *testing.T) {
+	const size = 8
+
+	mutations := []struct {
+		name   string
+		mutate func(q *Deque[int])
+	}{
+		{"Grow", func(q *Deque[int]) { q.Grow(1000) }},
+		{"ClearRefill", func(q *Deque[int]) {
+			q.Clear()
+			for i := range size {
+				q.PushBack(i)
+			}
+		}},
+		{"PushBackPopBack", func(q *Deque[int]) {
+			q.PushBack(0)
+			q.PopBack()
+		}},
+		{"PushFrontPopFront", func(q *Deque[int]) {
+			q.PushFront(0)
+			q.PopFront()
+		}},
+	}
+
+	for _, m := range mutations {
+		t.Run(m.name, func(t *testing.T) {
+			var q Deque[int]
+			for i := range size {
+				q.PushBack(i)
+			}
+			var seen int
+			for range q.Iter() {
+				m.mutate(&q)
+				seen++
+			}
+			for range q.RIter() {
+				m.mutate(&q)
+				seen++
+			}
+			if seen != 2*size {
+				t.Fatalf("yielded %d items, want %d", seen, 2*size)
+			}
+		})
+	}
+
+	// A push on a full deque reallocates, so the pop does not restore it.
+	var q Deque[int]
+	for i := range minCapacity {
+		q.PushBack(i)
+	}
+	assertPanics(t, "must detect reallocation", func() {
+		for range q.Iter() {
+			q.PushBack(0)
+			q.PopBack()
+		}
+	})
+}
+
+func TestCopyRetainsBuffer(t *testing.T) {
+	var q Deque[int]
+	q.Grow(64)
+	c := q.Cap()
+	q.PushBack(1)
+	q.CopyInSlice([]int{2, 3})
+	if q.Cap() != c {
+		t.Fatalf("CopyInSlice changed capacity from %d to %d", c, q.Cap())
+	}
+	if q.Len() != 2 || q.At(0) != 2 || q.At(1) != 3 {
+		t.Fatal("CopyInSlice copied wrong contents")
+	}
+
+	var src Deque[int]
+	src.PushBack(4)
+	q.Copy(src)
+	if q.Cap() != c {
+		t.Fatalf("Copy changed capacity from %d to %d", c, q.Cap())
+	}
+	if q.Len() != 1 || q.Front() != 4 {
+		t.Fatal("Copy copied wrong contents")
+	}
+}
+
+func TestIterModifyAfterBreak(t *testing.T) {
+	var q Deque[int]
+	for i := range 8 {
+		q.PushBack(i)
+	}
+
+	for range q.Iter() {
+		q.PushBack(0)
+		break
+	}
+	for range q.RIter() {
+		q.PushBack(0)
+		break
+	}
+	if q.Len() != 10 {
+		t.Fatalf("expected length 10, got %d", q.Len())
+	}
+}
+
+func TestIterNil(t *testing.T) {
+	var q *Deque[int]
+	for range q.Iter() {
+		t.Fatal("Iter yielded from nil deque")
+	}
+	for range q.RIter() {
+		t.Fatal("RIter yielded from nil deque")
+	}
 }
 
 func TestIterPopBack(t *testing.T) {
