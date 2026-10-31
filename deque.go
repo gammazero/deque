@@ -217,11 +217,15 @@ func (q *Deque[T]) Set(i int, item T) {
 // Deque during iteration panics.
 func (q *Deque[T]) Iter() iter.Seq[T] {
 	return func(yield func(T) bool) {
+		if q.Len() == 0 {
+			return
+		}
 		origHead := q.head
 		origTail := q.tail
+		origCount := q.count
 		head := origHead
-		for range q.Len() {
-			if q.head != origHead || q.tail != origTail {
+		for range origCount {
+			if q.head != origHead || q.tail != origTail || q.count != origCount {
 				panic("deque: modified during iteration")
 			}
 			if !yield(q.buf[head]) {
@@ -237,11 +241,15 @@ func (q *Deque[T]) Iter() iter.Seq[T] {
 // Modification of Deque during iteration panics.
 func (q *Deque[T]) RIter() iter.Seq[T] {
 	return func(yield func(T) bool) {
+		if q.Len() == 0 {
+			return
+		}
 		origHead := q.head
 		origTail := q.tail
+		origCount := q.count
 		tail := origTail
-		for range q.Len() {
-			if q.head != origHead || q.tail != origTail {
+		for range origCount {
+			if q.head != origHead || q.tail != origTail || q.count != origCount {
 				panic("deque: modified during iteration")
 			}
 			tail = q.prev(tail)
