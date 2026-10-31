@@ -204,8 +204,8 @@ func (q *Deque[T]) At(i int) T {
 }
 
 // Set assigns the item to index i in the queue. Set indexes the deque the same
-// as [At] but perform the opposite operation. If the index is invalid, the call
-// panics.
+// as [At] but performs the opposite operation. If the index is invalid, the
+// call panics.
 func (q *Deque[T]) Set(i int, item T) {
 	q.checkRange(i)
 	// bitwise modulus
@@ -362,7 +362,7 @@ func (q *Deque[T]) Copy(src Deque[T]) int {
 // is an efficient shortcut for
 //
 //	for i := 0; i < q.Len(); i++ {
-//		x = append(out, q.At(i))
+//		out = append(out, q.At(i))
 //	}
 func (q *Deque[T]) AppendToSlice(out []T) []T {
 	if q.count == 0 {
@@ -533,12 +533,12 @@ func (q *Deque[T]) RIndex(f func(T) bool) int {
 // Insert is used to insert an element into the middle of the queue, before the
 // element at the specified index. Insert(0,e) is the same as PushFront(e) and
 // Insert(Len(),e) is the same as PushBack(e). Out of range indexes result in
-// pushing the item onto the front of back of the deque.
+// pushing the item onto the front or back of the deque.
 //
 // Important: Deque is optimized for O(1) operations at the ends of the queue,
-// not for operations in the the middle. Complexity of this function is
-// constant plus linear in the lesser of the distances between the index and
-// either of the ends of the queue.
+// not for operations in the middle. Complexity of this function is constant
+// plus linear in the lesser of the distances between the index and either of
+// the ends of the queue.
 func (q *Deque[T]) Insert(at int, item T) {
 	if at <= 0 {
 		q.PushFront(item)
@@ -574,9 +574,9 @@ func (q *Deque[T]) Insert(at int, item T) {
 // index is out of range.
 //
 // Important: Deque is optimized for O(1) operations at the ends of the queue,
-// not for operations in the the middle. Complexity of this function is
-// constant plus linear in the lesser of the distances between the index and
-// either of the ends of the queue.
+// not for operations in the middle. Complexity of this function is constant
+// plus linear in the lesser of the distances between the index and either of
+// the ends of the queue.
 func (q *Deque[T]) Remove(at int) T {
 	q.checkRange(at)
 	rm := (q.head + at) & (len(q.buf) - 1)
@@ -661,7 +661,7 @@ func (q *Deque[T]) growIfFull() {
 	q.resize(q.count << 1)
 }
 
-// shrinkIfExcess resize down if the buffer 1/4 full.
+// shrinkIfExcess resizes down if the buffer is 1/4 full.
 func (q *Deque[T]) shrinkIfExcess() {
 	if len(q.buf) > q.minCap && (q.count<<2) == len(q.buf) {
 		q.resize(q.count << 1)
@@ -685,9 +685,9 @@ func (q *Deque[T]) shrinkToFit() {
 	}
 }
 
-// resize resizes the deque to fit exactly twice its current contents. This is
-// used to grow the queue when it is full, and also to shrink it when it is
-// only a quarter full.
+// resize resizes the deque to have the specified capacity, copying the
+// contends from the old buffer to the new buffer.. This is used to grow the
+// queue when it is full, and also to shrink it when it is one a quarter full.
 func (q *Deque[T]) resize(newSize int) {
 	newBuf := make([]T, newSize)
 	if q.tail > q.head {
