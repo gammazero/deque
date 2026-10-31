@@ -213,8 +213,13 @@ func (q *Deque[T]) Set(i int, item T) {
 }
 
 // Iter returns a go iterator to range over all items in the Deque, yielding
-// each item from front (index 0) to back (index Len()-1). Modification of
-// Deque during iteration panics.
+// each item from front (index 0) to back (index Len()-1). Advancing to the
+// next item panics if the loop body left the Deque with a different head,
+// tail, or item count. Changes made before breaking out of the loop or while
+// handling the last item are not detected, since no further item is read.
+// Changes that leave these the same, such as [Set], [Swap], or a push followed
+// by a pop at the same end, are allowed. If q is nil, the iterator yields
+// nothing.
 func (q *Deque[T]) Iter() iter.Seq[T] {
 	return func(yield func(T) bool) {
 		if q.Len() == 0 {
@@ -237,8 +242,13 @@ func (q *Deque[T]) Iter() iter.Seq[T] {
 }
 
 // RIter returns a reverse go iterator to range over all items in the Deque,
-// yielding each item from back (index Len()-1) to front (index 0).
-// Modification of Deque during iteration panics.
+// yielding each item from back (index Len()-1) to front (index 0). Advancing
+// to the next item panics if the loop body left the Deque with a different
+// head, tail, or item count. Changes made before breaking out of the loop or
+// while handling the last item are not detected, since no further item is
+// read. Changes that leave these the same, such as [Set], [Swap], or a push
+// followed by a pop at the same end, are allowed. If q is nil, the iterator
+// yields nothing.
 func (q *Deque[T]) RIter() iter.Seq[T] {
 	return func(yield func(T) bool) {
 		if q.Len() == 0 {
