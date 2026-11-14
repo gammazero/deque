@@ -425,7 +425,7 @@ func (q *Deque[T]) CopyInSlice(in []T) {
 //
 //	n := min(len(out), q.Len())
 //	for i := range n {
-//	 	out[i] = q.At(i)
+//		out[i] = q.At(i)
 //	}
 //
 // This function is preferable to one that returns a copy of the internal
@@ -688,8 +688,8 @@ func (q *Deque[T]) shrinkToFit() {
 }
 
 // resize resizes the deque to have the specified capacity, copying the
-// contends from the old buffer to the new buffer. This is used to grow the
-// queue when it is full, and also to shrink it when it is one a quarter full.
+// contents from the old buffer to the new buffer. This is used to grow the
+// queue when it is full, and also to shrink it when it is one quarter full.
 func (q *Deque[T]) resize(newSize int) {
 	newBuf := make([]T, newSize)
 	if q.tail > q.head {
