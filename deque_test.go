@@ -1583,7 +1583,7 @@ func TestAppendToSlice(t *testing.T) {
 
 	out = q.AppendToSlice(out)
 	if len(out) != 2*len(content) {
-		t.Fatal("worng output length")
+		t.Fatal("wrong output length")
 	}
 	if !slices.Equal(content, out[:len(content)]) {
 		t.Fatal("did not get expected content at start of out")
@@ -1606,10 +1606,10 @@ func TestAppendToSlice(t *testing.T) {
 		t.Fatal("wrong output length")
 	}
 	if out[0] != q.Front() {
-		t.Fatal("worng first element")
+		t.Fatal("wrong first element")
 	}
 	if out[len(out)-1] != q.Back() {
-		t.Fatal("worng last element")
+		t.Fatal("wrong last element")
 	}
 
 	q.Clear()

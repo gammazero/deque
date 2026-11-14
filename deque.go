@@ -337,7 +337,7 @@ func (q *Deque[T]) Grow(n int) {
 //	b.Clear()
 //	n := a.Len()
 //	b.Grow(n)
-//	for i := 0; i < n; i++ {
+//	for i := range n {
 //		b.PushBack(a.At(i))
 //	}
 func (q *Deque[T]) Copy(src Deque[T]) int {
@@ -363,7 +363,7 @@ func (q *Deque[T]) Copy(src Deque[T]) int {
 //
 // is an efficient shortcut for
 //
-//	for i := 0; i < q.Len(); i++ {
+//	for i := range q.Len() {
 //		out = append(out, q.At(i))
 //	}
 func (q *Deque[T]) AppendToSlice(out []T) []T {
@@ -424,7 +424,7 @@ func (q *Deque[T]) CopyInSlice(in []T) {
 // is an efficient shortcut for
 //
 //	n := min(len(out), q.Len())
-//	for i := 0; i < n; i++ {
+//	for i := range n {
 //	 	out[i] = q.At(i)
 //	}
 //
@@ -688,7 +688,7 @@ func (q *Deque[T]) shrinkToFit() {
 }
 
 // resize resizes the deque to have the specified capacity, copying the
-// contends from the old buffer to the new buffer.. This is used to grow the
+// contends from the old buffer to the new buffer. This is used to grow the
 // queue when it is full, and also to shrink it when it is one a quarter full.
 func (q *Deque[T]) resize(newSize int) {
 	newBuf := make([]T, newSize)
