@@ -1658,6 +1658,16 @@ func TestCopy(t *testing.T) {
 	}
 }
 
+func TestCopyZeroSizedElements(t *testing.T) {
+	var src, dst Deque[struct{}]
+	src.CopyInSlice(make([]struct{}, 20))
+	dst.PushBack(struct{}{})
+
+	if n := dst.Copy(src); n != src.Len() || dst.Len() != src.Len() {
+		t.Fatalf("Copy returned %d and set length to %d, want both %d", n, dst.Len(), src.Len())
+	}
+}
+
 func TestCopySelf(t *testing.T) {
 	for _, size := range []int{0, 1, 10, 16, 20, 33, 7} {
 		var q Deque[int]

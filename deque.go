@@ -341,7 +341,9 @@ func (q *Deque[T]) Grow(n int) {
 //		b.PushBack(a.At(i))
 //	}
 func (q *Deque[T]) Copy(src Deque[T]) int {
-	if unsafe.SliceData(q.buf) == unsafe.SliceData(src.buf) {
+	// Separate buffers of zero-sized elements can have the same address.
+	var zero T
+	if unsafe.Sizeof(zero) != 0 && unsafe.SliceData(q.buf) == unsafe.SliceData(src.buf) {
 		return q.Len()
 	}
 	q.Clear()
